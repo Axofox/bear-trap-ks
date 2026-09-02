@@ -1,0 +1,1128 @@
+<title>Bear Trap Joiner Calc</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;900&family=JetBrains+Mono:wght@500;600;700&display=swap">
+<style>
+  :root{
+    --bg:#0D0F10;
+    --surface:#171B21;
+    --surface-2:#1D2229;
+    --surface-3:#20262E;
+    --border:#262B33;
+    --border-2:#2E3540;
+    --heading:#F2F5F7;
+    --body:#8A949E;
+    --dim:#5B636C;
+    --periwinkle:#6B8AFF;
+    --cyan:#4FD1E0;
+    --mint:#4ADE9B;
+    --lime:#D8E04F;
+    --warn:#E0A64F;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--body);
+    font-family:'Archivo',system-ui,sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  html{scroll-behavior:smooth;}
+
+  h1,h2,h3{
+    color:var(--heading);
+    font-weight:900;
+    letter-spacing:-0.02em;
+    text-wrap:balance;
+    margin:0;
+  }
+
+  .mono{
+    font-family:'JetBrains Mono',ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+  }
+
+  .eyebrow{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'JetBrains Mono',ui-monospace,monospace;
+    font-size:11px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:var(--dim);
+    margin-bottom:10px;
+  }
+  .dot{
+    width:7px;height:7px;border-radius:50%;
+    flex:none;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    background:rgba(13,15,16,0.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+    padding:12px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .topbar-title{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.1em;
+    color:var(--heading);
+    white-space:nowrap;
+  }
+  .topbar-title span{color:var(--dim);}
+  .navpills{
+    display:flex;gap:6px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .navpills::-webkit-scrollbar{display:none;}
+  .navpill{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--body);
+    border:1px solid var(--border-2);
+    border-radius:999px;
+    padding:6px 11px;
+    white-space:nowrap;
+    text-decoration:none;
+    flex:none;
+  }
+
+  /* ---------- layout ---------- */
+  .wrap{
+    max-width:540px;
+    margin:0 auto;
+    padding:0 20px 80px;
+  }
+  .hero{
+    padding:36px 0 8px;
+  }
+  .hero p{
+    max-width:46ch;
+    margin:14px 0 22px;
+    font-size:15px;
+    color:var(--body);
+  }
+
+  .pill-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    background:transparent;
+    border:1px solid currentColor;
+    border-radius:999px;
+    padding:11px 18px;
+    cursor:pointer;
+    text-decoration:none;
+  }
+  .pill-btn::after{content:"\2192";font-weight:700;}
+  .pill-btn.no-arrow::after{content:"";}
+  .pill-periwinkle{color:var(--periwinkle);}
+  .pill-periwinkle:hover{background:rgba(107,138,255,0.08);}
+  .pill-lime{color:var(--lime);}
+  .pill-lime:hover{background:rgba(216,224,79,0.08);}
+
+  section{
+    padding:52px 0 8px;
+    scroll-margin-top:64px;
+  }
+  section + section{
+    border-top:1px solid var(--border);
+  }
+  section h2{
+    font-size:23px;
+    margin-bottom:8px;
+  }
+  section > .intro{
+    font-size:14.5px;
+    color:var(--body);
+    max-width:48ch;
+    margin-bottom:24px;
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:20px;
+  }
+  .card + .card{margin-top:14px;}
+
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--body);
+    background:var(--surface-2);
+    border:1px solid var(--border-2);
+    border-radius:6px;
+    padding:4px 8px;
+  }
+  .chip-warn{
+    color:var(--warn);
+    border-color:rgba(224,166,79,0.35);
+    background:rgba(224,166,79,0.08);
+  }
+
+  /* ================= CALCULATOR ================= */
+  #calc .dot{background:var(--periwinkle);}
+
+  .field-label{
+    font-size:12.5px;
+    color:var(--body);
+    font-weight:600;
+    margin-bottom:8px;
+    display:block;
+  }
+
+  .select-row{margin-bottom:20px;}
+  select.select-input{
+    width:100%;
+    background:var(--surface-2);
+    border:1px solid var(--border-2);
+    color:var(--heading);
+    font-family:'Archivo',sans-serif;
+    font-size:16px;
+    font-weight:600;
+    padding:12px 14px;
+    border-radius:9px;
+    appearance:none;
+    -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0 L5 6 L10 0' fill='none' stroke='%238A949E' stroke-width='1.4'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 14px center;
+    scroll-margin-top:80px;
+  }
+  select.select-input:focus{outline:2px solid var(--periwinkle);outline-offset:1px;}
+
+  .ratio-preview{
+    display:flex;gap:14px;
+    margin-top:10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--dim);
+  }
+  .ratio-preview b{color:var(--body);font-weight:600;}
+
+  .troop-inputs{
+    display:flex;flex-direction:column;gap:14px;
+    margin-bottom:6px;
+  }
+  .troop-input-row{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px;
+  }
+  .troop-input-row label{
+    font-size:14px;color:var(--heading);font-weight:600;
+    flex:none;
+  }
+  input.num-input{
+    width:150px;
+    text-align:right;
+    background:var(--surface-2);
+    border:1px solid var(--border-2);
+    color:var(--heading);
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px;
+    font-weight:600;
+    padding:11px 12px;
+    border-radius:9px;
+    font-variant-numeric:tabular-nums;
+    scroll-margin-top:80px;
+  }
+  input.num-input:focus{outline:2px solid var(--periwinkle);outline-offset:1px;}
+
+  .optional-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--dim);
+    margin-left:6px;
+  }
+  .capacity-row{
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px dashed var(--border-2);
+  }
+  .capacity-note{
+    font-size:12px;
+    color:var(--dim);
+    line-height:1.55;
+    margin-top:8px;
+  }
+
+  .subhead{
+    font-size:11px;
+    color:var(--dim);
+    margin:22px 0 12px;
+  }
+  .subhead:first-of-type{margin-top:20px;}
+
+  /* prevent iOS auto-zoom-on-focus and spinner-driven layout shift on all form controls */
+  input, select, textarea{
+    font-size:16px;
+  }
+  input[type="number"]{
+    -moz-appearance:textfield;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+
+  .result-card{
+    background:var(--surface);
+    border:1px solid rgba(107,138,255,0.45);
+    border-radius:14px;
+    padding:30px 22px 26px;
+    text-align:center;
+    box-shadow:0 0 0 1px rgba(107,138,255,0.06),0 0 48px -12px rgba(107,138,255,0.55);
+    margin-bottom:16px;
+  }
+  .result-label{
+    font-size:11px;color:var(--dim);margin-bottom:10px;
+  }
+  .result-number{
+    font-family:'Archivo',sans-serif;
+    font-weight:900;
+    font-size:clamp(38px,12vw,56px);
+    line-height:1;
+    color:var(--periwinkle);
+    text-shadow:0 0 32px rgba(107,138,255,0.55);
+    letter-spacing:-0.02em;
+    font-variant-numeric:tabular-nums;
+  }
+  .result-sub{
+    margin-top:10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--body);
+  }
+
+  .ratio-bar{
+    display:flex;
+    height:10px;
+    border-radius:5px;
+    overflow:hidden;
+    margin-top:18px;
+    border:1px solid var(--border-2);
+  }
+  .ratio-bar-seg{height:100%;transition:width 0.15s ease;}
+
+  .train-summary{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    margin:18px 0 20px;
+    padding:14px 16px;
+    background:var(--surface-2);
+    border:1px solid var(--border-2);
+    border-radius:10px;
+  }
+  .train-summary-num{
+    font-family:'Archivo',sans-serif;
+    font-weight:900;
+    font-size:26px;
+    color:var(--periwinkle);
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-0.01em;
+  }
+  .train-summary-label{
+    font-size:11px;
+    color:var(--dim);
+  }
+
+  .set-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    font-weight:700;
+    color:var(--mint);
+    border:1px solid rgba(74,222,155,0.4);
+    border-radius:4px;
+    padding:2px 5px;
+  }
+  .unused-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    font-weight:700;
+    color:var(--dim);
+    border:1px solid var(--border-2);
+    border-radius:4px;
+    padding:2px 5px;
+  }
+
+  .breakdown{
+    display:flex;flex-direction:column;gap:12px;
+    margin-bottom:8px;
+  }
+  .breakdown-row{
+    display:flex;align-items:center;justify-content:space-between;
+    font-size:13.5px;
+    gap:10px;
+  }
+  .breakdown-row .k{
+    color:var(--heading);
+    display:flex;align-items:center;gap:7px;
+  }
+  .breakdown-row .v{
+    font-family:'JetBrains Mono',monospace;
+    color:var(--heading);
+    font-variant-numeric:tabular-nums;
+    text-align:right;
+  }
+  .breakdown-row .v small{
+    display:block;
+    color:var(--dim);
+    font-size:10.5px;
+    font-weight:400;
+    margin-top:2px;
+  }
+  .limit-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    font-weight:700;
+    color:var(--periwinkle);
+    border:1px solid rgba(107,138,255,0.4);
+    border-radius:4px;
+    padding:2px 5px;
+  }
+
+  .formula-box{
+    margin-top:16px;
+    padding-top:16px;
+    border-top:1px dashed var(--border-2);
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--dim);
+    line-height:1.7;
+  }
+  .formula-box b{color:var(--body);}
+
+  .warn-note{
+    display:flex;gap:8px;
+    align-items:flex-start;
+    background:rgba(224,166,79,0.08);
+    border:1px solid rgba(224,166,79,0.3);
+    border-radius:10px;
+    padding:11px 13px;
+    font-size:12.5px;
+    color:var(--warn);
+    margin-bottom:14px;
+  }
+
+  .reset-row{
+    display:flex;justify-content:flex-end;
+    margin-top:16px;
+  }
+
+  /* ================= HOW SECTION ================= */
+  #how .dot{background:var(--cyan);}
+  .how-list{
+    display:flex;flex-direction:column;gap:16px;
+  }
+  .how-item{
+    display:flex;gap:14px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px;
+  }
+  .how-num{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:13px;
+    color:var(--cyan);
+    flex:none;
+    width:20px;
+  }
+  .how-item p{
+    margin:0;
+    font-size:14.5px;
+    color:var(--heading);
+    font-weight:500;
+    line-height:1.55;
+  }
+  .how-item p em{
+    font-style:normal;
+    color:var(--cyan);
+  }
+
+  /* ================= EXAMPLES ================= */
+  #examples .dot{background:var(--mint);}
+
+  .example{
+    display:flex;flex-direction:column;
+    gap:0;
+    margin-bottom:22px;
+  }
+  .shot-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px;
+  }
+  .shot-frame{
+    position:relative;
+    background:var(--surface-2);
+    border:1px solid var(--border-2);
+    border-radius:10px;
+    aspect-ratio:9/14;
+    max-width:230px;
+    margin:0 auto;
+    padding:14px 12px;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .shot-placeholder-tag{
+    position:absolute;top:10px;right:10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:8.5px;
+    letter-spacing:0.06em;
+    color:var(--dim);
+    border:1px solid var(--border-2);
+    border-radius:4px;
+    padding:2px 5px;
+    background:var(--surface);
+  }
+  .shot-report-title{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    letter-spacing:0.08em;
+    color:var(--dim);
+    margin-bottom:16px;
+  }
+  .shot-bars{
+    display:flex;flex-direction:column;gap:10px;
+    margin-bottom:auto;
+  }
+  .shot-bar-row{
+    display:flex;flex-direction:column;gap:4px;
+  }
+  .shot-bar-label{
+    display:flex;justify-content:space-between;
+    font-family:'JetBrains Mono',monospace;
+    font-size:8.5px;
+    color:var(--dim);
+  }
+  .shot-bar-label b{color:var(--heading);font-weight:700;}
+  .shot-bar-track{
+    height:6px;border-radius:3px;
+    background:var(--surface-3);
+    border:1px solid var(--border-2);
+    overflow:hidden;
+  }
+  .shot-bar-fill{height:100%;border-radius:3px;}
+  .shot-stat-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:8.5px;color:var(--dim);
+    margin-top:16px;
+  }
+  .shot-stat-value{
+    font-family:'Archivo',sans-serif;
+    font-weight:900;
+    font-size:26px;
+    color:var(--heading);
+    letter-spacing:-0.02em;
+  }
+  .shot-annot{
+    display:flex;align-items:center;gap:6px;
+    margin-top:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    color:var(--mint);
+  }
+  .shot-annot .arrow{font-size:11px;}
+
+  .example-caption{
+    margin-top:12px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .example-caption .cap-mono{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--mint);
+    letter-spacing:0.04em;
+  }
+  .example-caption .cap-body{
+    font-size:13px;
+    color:var(--body);
+  }
+
+  /* ================= PRESETS TABLE ================= */
+  #data .dot{background:var(--lime);}
+
+  .table-scroll{
+    overflow-x:auto;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--surface);
+  }
+  table{
+    border-collapse:collapse;
+    width:100%;
+    min-width:520px;
+  }
+  th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--dim);
+    text-align:left;
+    padding:13px 14px;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  td{
+    padding:10px 14px;
+    border-bottom:1px solid var(--border);
+    font-size:13px;
+    color:var(--body);
+    vertical-align:middle;
+  }
+  tr:last-child td{border-bottom:none;}
+
+  input.name-input{
+    width:130px;
+    background:var(--surface-2);
+    border:1px solid var(--border-2);
+    color:var(--heading);
+    font-family:'Archivo',sans-serif;
+    font-size:16px;
+    font-weight:600;
+    padding:7px 9px;
+    border-radius:7px;
+    scroll-margin-top:80px;
+  }
+  input.pct-input{
+    width:66px;
+    background:var(--surface-2);
+    border:1px solid var(--border-2);
+    color:var(--heading);
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px;
+    font-weight:600;
+    padding:7px 8px;
+    border-radius:7px;
+    text-align:right;
+    scroll-margin-top:80px;
+  }
+  input.name-input:focus, input.pct-input:focus{outline:2px solid var(--lime);outline-offset:1px;}
+
+  .row-del{
+    background:none;border:none;
+    color:var(--dim);
+    font-family:'JetBrains Mono',monospace;
+    font-size:15px;
+    cursor:pointer;
+    padding:4px 6px;
+  }
+  .row-del:hover{color:var(--warn);}
+
+  .legend{
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    margin-top:14px;
+  }
+
+  footer{
+    padding:40px 0 10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--dim);
+    line-height:1.8;
+  }
+</style>
+
+<div class="topbar">
+  <div class="topbar-title">🐻 KINGSHOT <span>/ BEAR TRAP</span></div>
+  <div class="navpills">
+    <a class="navpill" href="#calc">Calc</a>
+    <a class="navpill" href="#how">How</a>
+    <a class="navpill" href="#examples">Examples</a>
+    <a class="navpill" href="#data">Ratios</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <h1>Bear Trap<br>Troop Ratio Calc</h1>
+    <p>Type in what you've actually got — Infantry, Cavalry, Archer — see your current ratio instantly, then see exactly what to train to hit a target ratio.</p>
+    <a class="pill-btn pill-periwinkle" href="#calc">Jump to calculator</a>
+  </div>
+
+  <!-- ================= CALCULATOR ================= -->
+  <section id="calc">
+    <div class="eyebrow"><span class="dot"></span>Calculator</div>
+    <h2>Your troops, your ratio</h2>
+    <div class="intro">Type in what you actually have of each troop type, plus your rally capacity if you know it. You'll get your current ratio immediately below, then how many to send now and train next further down.</div>
+
+    <div class="card">
+      <div class="troop-inputs">
+        <div class="troop-input-row">
+          <label>Infantry you have</label>
+          <input class="num-input" type="number" min="0" step="1" id="haveInf" value="0">
+        </div>
+        <div class="troop-input-row">
+          <label>Cavalry you have</label>
+          <input class="num-input" type="number" min="0" step="1" id="haveCav" value="0">
+        </div>
+        <div class="troop-input-row">
+          <label>Archer you have</label>
+          <input class="num-input" type="number" min="0" step="1" id="haveArc" value="0">
+        </div>
+      </div>
+      <div class="capacity-row">
+        <div class="troop-input-row">
+          <label>Rally capacity <span class="optional-tag">optional</span></label>
+          <input class="num-input" type="number" min="0" step="1" id="rallyCapacity" value="" placeholder="no cap">
+        </div>
+        <div class="capacity-note">Your march / rally troop limit for this event — the ratio comes from this cap, so both results below stop growing once they hit it. Leave blank if you don't know it yet.</div>
+      </div>
+    </div>
+
+    <!-- ---- your current ratio (the shout) ---- -->
+    <div class="result-card">
+      <div class="result-label mono">Your current ratio · Inf / Cav / Arc</div>
+      <div class="result-number" id="ratioShout">0 / 0 / 0</div>
+      <div class="result-sub" id="ratioSub">ENTER YOUR TROOP COUNTS ABOVE</div>
+      <div class="ratio-bar" id="ratioBar">
+        <div class="ratio-bar-seg" id="segInf" style="background:rgba(107,138,255,0.35);"></div>
+        <div class="ratio-bar-seg" id="segCav" style="background:rgba(107,138,255,0.65);"></div>
+        <div class="ratio-bar-seg" id="segArc" style="background:var(--periwinkle);"></div>
+      </div>
+    </div>
+
+    <div class="reset-row" style="margin-top:-4px;margin-bottom:8px;">
+      <button class="pill-btn pill-periwinkle" id="resetBtn" type="button">Reset troops</button>
+    </div>
+
+    <!-- ---- target ratio: send now + train next (secondary, quieter) ---- -->
+    <div class="card" style="margin-top:28px;">
+      <div class="eyebrow" style="margin-bottom:16px;"><span class="dot"></span>Target ratio</div>
+      <label class="field-label mono">Pick a ratio</label>
+      <select class="select-input" id="presetSelect"></select>
+      <div class="ratio-preview mono" id="ratioPreview"></div>
+
+      <div id="warnArea"></div>
+
+      <div class="subhead mono">Send on this rally</div>
+      <div class="train-summary">
+        <div class="train-summary-num" id="sendNowNum">0</div>
+        <div class="train-summary-label mono">troops to send now</div>
+      </div>
+      <div class="breakdown" id="sendBreakdownArea"></div>
+
+      <div class="subhead mono">Train for next time</div>
+      <div class="train-summary">
+        <div class="train-summary-num" id="trainNeedNum">0</div>
+        <div class="train-summary-label mono">more troops to train</div>
+      </div>
+      <div class="breakdown" id="breakdownArea"></div>
+
+      <div class="formula-box" id="formulaBox"></div>
+    </div>
+  </section>
+
+  <!-- ================= HOW IT WORKS ================= -->
+  <section id="how">
+    <div class="eyebrow"><span class="dot"></span>Why this math</div>
+    <h2>Why it's not just "send everyone"</h2>
+    <div class="how-list">
+      <div class="how-item">
+        <div class="how-num">01</div>
+        <p>Archers hit hardest, so joiner ratios lean archer-heavy — but Bear Trap damage scales with a <em>square root of army size</em>, so stacking one type past a point gives diminishing returns. There's no single fixed ratio, only good defaults.</p>
+      </div>
+      <div class="how-item">
+        <div class="how-num">02</div>
+        <p>The <em>your ratio</em> readout above just shows what your current Infantry/Cavalry/Archer counts already add up to as percentages — no target involved, just where you stand right now.</p>
+      </div>
+      <div class="how-item">
+        <div class="how-num">03</div>
+        <p>The <em>target ratio</em> card checks that against a ratio and your <em>rally capacity</em> — the march limit the ratio is actually built for. "Send now" is capped by whichever runs out first, troops or capacity; "train next" tells you what to grow, never past that same cap.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= EXAMPLES ================= -->
+  <section id="examples">
+    <div class="eyebrow"><span class="dot"></span>Worked example</div>
+    <h2>A real troop count, both ways</h2>
+    <div class="intro">Screenshot below is a placeholder mockup — swap in a real troop-composition capture once you have one. Numbers below are an actual troop count run through both calculators.</div>
+
+    <div class="example">
+      <div class="shot-card">
+        <div class="shot-frame">
+          <div class="shot-placeholder-tag mono">Mockup</div>
+          <div class="shot-report-title mono">My Troops</div>
+          <div class="shot-bars">
+            <div class="shot-bar-row">
+              <div class="shot-bar-label"><span>INFANTRY</span><b>90,643</b></div>
+              <div class="shot-bar-track"><div class="shot-bar-fill" style="width:30%;background:rgba(107,138,255,0.35);"></div></div>
+            </div>
+            <div class="shot-bar-row">
+              <div class="shot-bar-label"><span>CAVALRY</span><b>94,201</b></div>
+              <div class="shot-bar-track"><div class="shot-bar-fill" style="width:31%;background:rgba(107,138,255,0.65);"></div></div>
+            </div>
+            <div class="shot-bar-row">
+              <div class="shot-bar-label"><span>ARCHER</span><b>119,422</b></div>
+              <div class="shot-bar-track"><div class="shot-bar-fill" style="width:39%;background:var(--periwinkle);"></div></div>
+            </div>
+          </div>
+          <div class="shot-stat-label mono">Your current ratio</div>
+          <div class="shot-stat-value">30 / 31 / 39</div>
+          <div class="shot-annot"><span class="arrow">↑</span> 304,266 troops total, archer-leaning already</div>
+        </div>
+      </div>
+      <div class="example-caption">
+        <div class="cap-mono">Step 1 · Your ratio</div>
+        <div class="cap-body">90,643 Infantry + 94,201 Cavalry + 119,422 Archer = 304,266 total. Each type's share of that total: 90,643 ÷ 304,266 ≈ 30%, 94,201 ÷ 304,266 ≈ 31%, 119,422 ÷ 304,266 ≈ 39%. No target ratio involved yet — this is purely a description of what you already have.</div>
+      </div>
+    </div>
+
+    <div class="example">
+      <div class="card">
+        <div class="eyebrow" style="margin-bottom:14px;"><span class="dot"></span>Training plan output</div>
+        <div class="train-summary" style="margin:0 0 16px;">
+          <div class="train-summary-num">257,382</div>
+          <div class="train-summary-label mono">more troops to train</div>
+        </div>
+        <div class="breakdown">
+          <div class="breakdown-row"><span class="k">Infantry<span class="unused-tag">NOT IN THIS RATIO</span></span><span class="v">90,643<small>sits out this ratio</small></span></div>
+          <div class="breakdown-row"><span class="k">Cavalry<span class="set-tag">SETS THE TOTAL</span></span><span class="v">Enough<small>have 94,201 · target 94,201</small></span></div>
+          <div class="breakdown-row"><span class="k">Archer</span><span class="v">+257,382<small>have 119,422 · target 376,804</small></span></div>
+        </div>
+      </div>
+      <div class="example-caption">
+        <div class="cap-mono">Step 2 · Training plan at 0 / 20 / 80</div>
+        <div class="cap-body">Same troops, checked against the "Joiner 0/20/80" preset. Cavalry (94,201) already implies a 471,005-troop army at 20% — bigger than what Archer (119,422) supports at 80% (149,278). So Cavalry sets the target: to actually field 471,005 troops at this ratio, Archer needs to reach 376,804, meaning 257,382 more need training. The 90,643 Infantry aren't part of a 0%-Infantry ratio, so they just sit out.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RATIO PRESETS ================= -->
+  <section id="data">
+    <div class="eyebrow"><span class="dot"></span>Ratio presets</div>
+    <h2>Your alliance's target ratios</h2>
+    <div class="intro">Seeded with two ratios published by community Kingshot guides — not one official standard, since the true optimum depends on your rally leader's own stats. Edit, rename, or add rows to match what your alliance actually calls out. Percentages should add up to 100; the calculator above pulls from whichever preset is selected.</div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Preset name</th>
+            <th>Inf %</th>
+            <th>Cav %</th>
+            <th>Arc %</th>
+            <th>Sum</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="presetTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="legend">
+      <button class="pill-btn pill-lime no-arrow" id="addPresetBtn" type="button">+ Add preset</button>
+      <span class="chip chip-warn">⚠ sum ≠ 100% — check the row</span>
+    </div>
+  </section>
+
+  <footer>
+    Preset ratios sourced from public Kingshot community guides (kingshotguide.org, ldshop.gg) · not official Kingshot data, and not a substitute for a leader-specific optimizer · edit the presets above to match what your alliance actually uses · last touched 2026-09-02
+  </footer>
+
+</div>
+
+<script>
+  const TYPES = ['inf','cav','arc'];
+  const TYPE_LABEL = {inf:'Infantry', cav:'Cavalry', arc:'Archer'};
+
+  let PRESETS = [
+    {id:'p1', name:'Joiner 0/20/80', inf:0, cav:20, arc:80},
+    {id:'p2', name:'Joiner 20/30/50', inf:20, cav:30, arc:50},
+  ];
+  let activePresetId = 'p1';
+  let nextPresetNum = 3;
+
+  let have = {inf:0, cav:0, arc:0};
+  let capacity = 0;
+
+  const presetSelect = document.getElementById('presetSelect');
+  const ratioPreview = document.getElementById('ratioPreview');
+  const presetTableBody = document.getElementById('presetTableBody');
+  const breakdownArea = document.getElementById('breakdownArea');
+  const sendBreakdownArea = document.getElementById('sendBreakdownArea');
+  const formulaBox = document.getElementById('formulaBox');
+  const warnArea = document.getElementById('warnArea');
+  const ratioShout = document.getElementById('ratioShout');
+  const ratioSub = document.getElementById('ratioSub');
+  const trainNeedNum = document.getElementById('trainNeedNum');
+  const sendNowNum = document.getElementById('sendNowNum');
+
+  function fmt(n){
+    return Math.round(n).toLocaleString('en-US');
+  }
+
+  function getActivePreset(){
+    return PRESETS.find(p=>p.id===activePresetId) || PRESETS[0];
+  }
+
+  function renderPresetSelect(){
+    const prevValue = activePresetId;
+    presetSelect.innerHTML = PRESETS.map(p=>
+      `<option value="${p.id}">${p.name} — ${p.inf}/${p.cav}/${p.arc}</option>`
+    ).join('');
+    if(PRESETS.some(p=>p.id===prevValue)){
+      presetSelect.value = prevValue;
+    } else {
+      activePresetId = PRESETS[0].id;
+      presetSelect.value = activePresetId;
+    }
+  }
+
+  function renderPresetTable(){
+    presetTableBody.innerHTML = '';
+    PRESETS.forEach(p=>{
+      const sum = p.inf + p.cav + p.arc;
+      const sumOff = Math.abs(sum-100) > 0.01;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input class="name-input" type="text" value="${p.name}" data-id="${p.id}" data-field="name"></td>
+        <td><input class="pct-input" type="number" min="0" max="100" step="1" value="${p.inf}" data-id="${p.id}" data-field="inf"></td>
+        <td><input class="pct-input" type="number" min="0" max="100" step="1" value="${p.cav}" data-id="${p.id}" data-field="cav"></td>
+        <td><input class="pct-input" type="number" min="0" max="100" step="1" value="${p.arc}" data-id="${p.id}" data-field="arc"></td>
+        <td>${sumOff ? `<span class="chip chip-warn">${sum}%</span>` : `<span class="chip">${sum}%</span>`}</td>
+        <td>${PRESETS.length>1 ? `<button class="row-del" data-id="${p.id}" title="Remove preset">×</button>` : ''}</td>
+      `;
+      presetTableBody.appendChild(tr);
+    });
+
+    presetTableBody.querySelectorAll('input').forEach(inp=>{
+      inp.addEventListener('input', e=>{
+        const id = e.target.dataset.id;
+        const field = e.target.dataset.field;
+        const preset = PRESETS.find(p=>p.id===id);
+        if(field==='name'){
+          preset.name = e.target.value || 'Untitled';
+        } else {
+          const val = parseFloat(e.target.value);
+          preset[field] = isNaN(val) ? 0 : val;
+        }
+        renderPresetSelect();
+        renderPresetTable_softUpdateSumOnly();
+        computeAll();
+      });
+    });
+
+    presetTableBody.querySelectorAll('.row-del').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        const id = e.target.dataset.id;
+        if(PRESETS.length<=1) return;
+        PRESETS = PRESETS.filter(p=>p.id!==id);
+        if(activePresetId===id) activePresetId = PRESETS[0].id;
+        renderPresetSelect();
+        renderPresetTable();
+        computeAll();
+      });
+    });
+  }
+
+  function renderPresetTable_softUpdateSumOnly(){
+    presetTableBody.querySelectorAll('tr').forEach((tr,i)=>{
+      const p = PRESETS[i];
+      if(!p) return;
+      const sum = p.inf + p.cav + p.arc;
+      const sumOff = Math.abs(sum-100) > 0.01;
+      const cell = tr.children[4];
+      cell.innerHTML = sumOff ? `<span class="chip chip-warn">${sum}%</span>` : `<span class="chip">${sum}%</span>`;
+    });
+  }
+
+  function computeRatio(){
+    const total = have.inf + have.cav + have.arc;
+    if(total<=0){
+      ratioShout.textContent = '0 / 0 / 0';
+      ratioSub.textContent = 'ENTER YOUR TROOP COUNTS ABOVE';
+      ['segInf','segCav','segArc'].forEach(id=> document.getElementById(id).style.width = '0%');
+      return;
+    }
+    const pct = {};
+    TYPES.forEach(t=>{ pct[t] = have[t] / total * 100; });
+    ratioShout.textContent = `${pct.inf.toFixed(0)} / ${pct.cav.toFixed(0)} / ${pct.arc.toFixed(0)}`;
+    ratioSub.textContent = `${fmt(total)} TROOPS TOTAL`;
+    document.getElementById('segInf').style.width = pct.inf + '%';
+    document.getElementById('segCav').style.width = pct.cav + '%';
+    document.getElementById('segArc').style.width = pct.arc + '%';
+  }
+
+  function computeTargetRatio(){
+    const p = getActivePreset();
+    const sum = p.inf + p.cav + p.arc;
+    const frac = {};
+    TYPES.forEach(t=>{ frac[t] = sum>0 ? p[t]/sum : 0; });
+
+    ratioPreview.innerHTML = TYPES.map(t=>`<b>${TYPE_LABEL[t]} ${p[t]}%</b>`).join(' · ');
+
+    warnArea.innerHTML = '';
+    if(Math.abs(sum-100) > 0.01){
+      const div = document.createElement('div');
+      div.className = 'warn-note';
+      div.innerHTML = `<span>⚠</span><span>"${p.name}" adds up to ${sum}%, not 100 — results below are normalized proportionally. Fix the row in the presets table for exact numbers.</span>`;
+      warnArea.appendChild(div);
+    }
+
+    const relevant = TYPES.filter(t=>frac[t]>0);
+    const capBound = capacity>0 ? capacity : Infinity;
+    const naturalMin = relevant.length ? Math.min(...relevant.map(t=> have[t] / frac[t])) : 0;
+    const naturalMax = relevant.length ? Math.max(...relevant.map(t=> have[t] / frac[t])) : 0;
+
+    /* ---- send on this rally: bounded by what you have AND rally capacity ---- */
+    const sendTotal = relevant.length ? Math.min(capBound, naturalMin) : 0;
+    const sendCappedByCapacity = capacity>0 && capBound < naturalMin - 0.5;
+
+    sendNowNum.textContent = fmt(sendTotal);
+    const sendNowLabel = document.querySelector('#sendNowNum + .train-summary-label');
+    if(sendNowLabel){
+      sendNowLabel.textContent = sendCappedByCapacity ? 'troops to send now (at your rally capacity)' : 'troops to send now';
+    }
+
+    sendBreakdownArea.innerHTML = '';
+    TYPES.forEach(t=>{
+      const row = document.createElement('div');
+      row.className = 'breakdown-row';
+      if(frac[t]===0){
+        row.innerHTML = `
+          <span class="k">${TYPE_LABEL[t]}<span class="unused-tag">NOT IN THIS RATIO</span></span>
+          <span class="v">0<small>${fmt(have[t])} stay home</small></span>
+        `;
+      } else {
+        const send = sendTotal * frac[t];
+        const leftover = Math.max(0, have[t] - send);
+        const isBottleneck = !sendCappedByCapacity && Math.abs(have[t]/frac[t] - naturalMin) < 0.5 && sendTotal>0;
+        row.innerHTML = `
+          <span class="k">${TYPE_LABEL[t]}${isBottleneck ? '<span class="limit-tag">LIMITS TOTAL</span>' : ''}</span>
+          <span class="v">${fmt(send)}<small>${fmt(leftover)} left over</small></span>
+        `;
+      }
+      sendBreakdownArea.appendChild(row);
+    });
+
+    /* ---- train for next time: grow the short types, capped by rally capacity ---- */
+    const trainTotal = relevant.length ? Math.min(capBound, naturalMax) : 0;
+    const trainCappedByCapacity = capacity>0 && capBound < naturalMax - 0.5;
+
+    const need = {};
+    TYPES.forEach(t=>{
+      need[t] = frac[t]>0 ? Math.max(0, Math.round(frac[t]*trainTotal - have[t])) : 0;
+    });
+    const totalNeed = TYPES.reduce((s,t)=> s+need[t], 0);
+
+    trainNeedNum.textContent = fmt(totalNeed);
+    const trainNeedLabel = document.querySelector('#trainNeedNum + .train-summary-label');
+    if(trainNeedLabel){
+      trainNeedLabel.textContent = trainCappedByCapacity ? 'more troops to train (capped by rally capacity)' : 'more troops to train';
+    }
+
+    breakdownArea.innerHTML = '';
+    TYPES.forEach(t=>{
+      const row = document.createElement('div');
+      row.className = 'breakdown-row';
+      if(frac[t]===0){
+        row.innerHTML = `
+          <span class="k">${TYPE_LABEL[t]}<span class="unused-tag">NOT IN THIS RATIO</span></span>
+          <span class="v">${fmt(have[t])}<small>sits out this ratio</small></span>
+        `;
+      } else {
+        const isSet = need[t]===0 && trainTotal>0 && !trainCappedByCapacity;
+        row.innerHTML = `
+          <span class="k">${TYPE_LABEL[t]}${isSet ? '<span class="set-tag">SETS THE TOTAL</span>' : ''}</span>
+          <span class="v">${need[t]>0 ? '+'+fmt(need[t]) : 'Enough'}<small>have ${fmt(have[t])} · target ${fmt(frac[t]*trainTotal)}</small></span>
+        `;
+      }
+      breakdownArea.appendChild(row);
+    });
+
+    formulaBox.innerHTML = `
+      <b>send total = min( rally capacity, min over types with pct&gt;0 of have ⁄ frac )</b><br>
+      <b>train total = min( rally capacity, max over types with pct&gt;0 of have ⁄ frac )</b><br>
+      per type = total × ( pct[type] ⁄ Σpct ) — rally capacity caps both, since it's what the ratio is actually built for
+    `;
+  }
+
+  function computeAll(){
+    computeRatio();
+    computeTargetRatio();
+  }
+
+  presetSelect.addEventListener('change', e=>{
+    activePresetId = e.target.value;
+    computeAll();
+  });
+
+  ['haveInf','haveCav','haveArc'].forEach((id,i)=>{
+    document.getElementById(id).addEventListener('input', e=>{
+      const val = parseFloat(e.target.value);
+      have[TYPES[i]] = isNaN(val) ? 0 : val;
+      computeAll();
+    });
+  });
+
+  document.getElementById('rallyCapacity').addEventListener('input', e=>{
+    const val = parseFloat(e.target.value);
+    capacity = isNaN(val) ? 0 : val;
+    computeAll();
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    have = {inf:0, cav:0, arc:0};
+    capacity = 0;
+    document.getElementById('haveInf').value = 0;
+    document.getElementById('haveCav').value = 0;
+    document.getElementById('haveArc').value = 0;
+    document.getElementById('rallyCapacity').value = '';
+    computeAll();
+  });
+
+  document.getElementById('addPresetBtn').addEventListener('click', ()=>{
+    const id = 'p' + (nextPresetNum++);
+    PRESETS.push({id, name:'New preset', inf:0, cav:0, arc:0});
+    activePresetId = id;
+    renderPresetSelect();
+    renderPresetTable();
+    computeAll();
+  });
+
+  renderPresetSelect();
+  renderPresetTable();
+  computeAll();
+</script>
