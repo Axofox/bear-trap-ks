@@ -1097,22 +1097,25 @@
       const send = bestWithinStock(budget, cap, k);
       const sentTotal = TYPES.reduce((s,t)=> s + send[t], 0);
 
+      /* One rounding for the whole card, so the per-type rows and the
+         headline can't disagree by a point. */
+      const actualShares = {};
+      TYPES.forEach(t=>{ actualShares[t] = sentTotal>0 ? send[t]/sentTotal : 0; });
+      const aPct = roundedPct(actualShares);
+
       TYPES.forEach(t=>{
-        const shareOfSend = sentTotal>0 ? send[t]/sentTotal*100 : 0;
         const pinned = stocked && send[t] >= cap[t] - 0.5 && cap[t] < Infinity;
         const row = document.createElement('div');
         row.className = 'breakdown-row';
         row.innerHTML = `
           <span class="k">${TYPE_LABEL[t]}${pinned ? '<span class="set-tag">ALL YOU HAVE</span>' : ''}</span>
-          <span class="v">${fmt(send[t])}<small>${shareOfSend.toFixed(0)}% of the march</small></span>
+          <span class="v">${fmt(send[t])}<small>${aPct[t]}% of the march</small></span>
         `;
         sendBreakdownArea.appendChild(row);
       });
 
       /* How good is this split, given the stock limit? */
       if(stocked && sentTotal>0){
-        const actualShares = {};
-        TYPES.forEach(t=>{ actualShares[t] = send[t]/sentTotal; });
         const rel = scoreOf(actualShares, k, sumSq) * 100;
         const short = budget < marchSize - 0.5;
         /* Constrained means a type got pinned to your stock — judge that
@@ -1120,12 +1123,29 @@
            but barely costly gets reported as the ideal one. */
         const constrained = TYPES.some(t=> Math.abs(send[t] - budget*share[t]) > 1);
         if(constrained || short){
+          /* The ideal ratio isn't reachable with this stock, so the headline
+             shows the ratio you can actually put in each march. The ideal
+             stays visible underneath as the thing to train toward. */
+          bestShout.textContent = `${aPct.inf} / ${aPct.cav} / ${aPct.arc}`;
+          bestSub.textContent = `WHAT YOU CAN SEND · ${rel.toFixed(1)}% OF IDEAL`;
+          $('segInf').style.width = (actualShares.inf*100) + '%';
+          $('segCav').style.width = (actualShares.cav*100) + '%';
+          $('segArc').style.width = (actualShares.arc*100) + '%';
+
           sendNote.innerHTML = `<div class="stock-note">
-            <b>${rel.toFixed(1)}%</b> of the damage the ideal ratio would do.
-            ${short ? `You can only fill ${fmt(budget)} of your ${fmt(marchSize)} march — you don't have enough troops for ${rallyCount} full ${rallyCount===1?'march':'marches'}.` : `You don't hold enough of every type to hit ${pct.inf} / ${pct.cav} / ${pct.arc}, so this is the best split from your stock.`}
+            Put <b>${aPct.inf} / ${aPct.cav} / ${aPct.arc}</b> in each of your ${rallyCount}
+            ${rallyCount===1?'march':'marches'} — the same split every time, since spreading each
+            troop type evenly across marches always beats loading one.<br><br>
+            The ideal is ${pct.inf} / ${pct.cav} / ${pct.arc}, but
+            ${short
+              ? `you only have enough troops to fill ${fmt(budget)} of your ${fmt(marchSize)} march.`
+              : `you don't hold enough of every type to reach it.`}
+            What you can send is worth <b>${rel.toFixed(1)}%</b> of it.
           </div>`;
         } else {
-          sendNote.innerHTML = `<div class="stock-note stock-ok"><b>Full ideal ratio.</b> You have enough of every type to send the best possible split.</div>`;
+          sendNote.innerHTML = `<div class="stock-note stock-ok"><b>Full ideal ratio.</b>
+            Put ${pct.inf} / ${pct.cav} / ${pct.arc} in each of your ${rallyCount}
+            ${rallyCount===1?'march':'marches'} — you have enough of every type.</div>`;
         }
       }
 
