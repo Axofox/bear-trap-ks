@@ -349,27 +349,6 @@
   }
   .ratio-bar-seg{height:100%;transition:width 0.15s ease;}
 
-  .use-as-target-link{
-    display:inline-block;
-    background:none;
-    border:none;
-    color:var(--periwinkle);
-    font-family:'JetBrains Mono',monospace;
-    font-size:11px;
-    font-weight:700;
-    letter-spacing:0.06em;
-    text-transform:uppercase;
-    cursor:pointer;
-    margin-top:16px;
-    padding:4px 2px;
-  }
-  .use-as-target-link:hover{text-decoration:underline;}
-  .use-as-target-link:disabled{
-    color:var(--dim);
-    cursor:default;
-    text-decoration:none;
-  }
-
   .train-summary{
     display:flex;
     align-items:baseline;
@@ -714,7 +693,7 @@
   <div class="hero">
     <span class="chip chip-warn">For rally joiners — not rally leaders</span>
     <h1>Bear Trap<br>Troop Ratio Calc</h1>
-    <p>Type in what you've actually got — Infantry, Cavalry, Archer — see your current ratio instantly, then see exactly what to train to hit a target ratio.</p>
+    <p>Type in what you've actually got — Infantry, Cavalry, Archer — see your current ratio instantly, then see exactly what to send and train to hit the ratio that scores best.</p>
     <a class="pill-btn pill-periwinkle" href="#calc">Jump to calculator</a>
   </div>
 
@@ -758,7 +737,6 @@
         <div class="ratio-bar-seg" id="segCav" style="background:rgba(107,138,255,0.65);"></div>
         <div class="ratio-bar-seg" id="segArc" style="background:var(--periwinkle);"></div>
       </div>
-      <button class="use-as-target-link mono" id="useAsTargetBtn" type="button">Use this as my target ratio ↓</button>
     </div>
 
     <div class="reset-row" style="margin-top:-4px;margin-bottom:8px;">
@@ -767,7 +745,8 @@
 
     <!-- ---- target ratio: send now + train next (secondary, quieter) ---- -->
     <div class="card" style="margin-top:28px;">
-      <div class="eyebrow" style="margin-bottom:16px;"><span class="dot"></span>Target ratio</div>
+      <div class="eyebrow" style="margin-bottom:16px;"><span class="dot"></span>Best ratio to score higher</div>
+      <p style="font-size:13px;color:var(--body);margin:0 0 16px;line-height:1.55;">Not your current split — the ratio to aim for, sourced from what actually maximizes Bear Trap damage. See the <a href="#data" style="color:var(--periwinkle);">Ratios</a> section for where these come from.</p>
       <label class="field-label mono">Pick a ratio</label>
       <select class="select-input" id="presetSelect"></select>
       <div class="ratio-preview mono" id="ratioPreview"></div>
@@ -807,7 +786,7 @@
       </div>
       <div class="how-item">
         <div class="how-num">03</div>
-        <p>The <em>target ratio</em> card checks that against a ratio and your <em>rally capacity</em> — the march limit the ratio is actually built for. "Send now" is capped by whichever runs out first, troops or capacity; "train next" tells you what to grow, never past that same cap.</p>
+        <p>The <em>best ratio to score higher</em> card checks that against the ratio that actually maximizes damage, plus your <em>rally capacity</em> — the march limit it's built for. "Send now" is capped by whichever runs out first, troops or capacity; "train next" tells you what to grow, never past that same cap.</p>
       </div>
     </div>
   </section>
@@ -927,7 +906,6 @@
   const ratioSub = document.getElementById('ratioSub');
   const trainNeedNum = document.getElementById('trainNeedNum');
   const sendNowNum = document.getElementById('sendNowNum');
-  const useAsTargetBtn = document.getElementById('useAsTargetBtn');
 
   function fmt(n){
     return Math.round(n).toLocaleString('en-US');
@@ -1010,7 +988,6 @@
 
   function computeRatio(){
     const total = have.inf + have.cav + have.arc;
-    useAsTargetBtn.disabled = total<=0;
     if(total<=0){
       ratioShout.textContent = '0 / 0 / 0';
       ratioSub.textContent = 'ENTER YOUR TROOP COUNTS ABOVE';
@@ -1024,15 +1001,6 @@
     document.getElementById('segInf').style.width = pct.inf + '%';
     document.getElementById('segCav').style.width = pct.cav + '%';
     document.getElementById('segArc').style.width = pct.arc + '%';
-  }
-
-  function currentRatioRounded(){
-    const total = have.inf + have.cav + have.arc;
-    if(total<=0) return null;
-    const pctInf = Math.round(have.inf/total*100);
-    const pctCav = Math.round(have.cav/total*100);
-    const pctArc = Math.max(0, 100 - pctInf - pctCav);
-    return {inf:pctInf, cav:pctCav, arc:pctArc};
   }
 
   function computeTargetRatio(){
@@ -1160,22 +1128,6 @@
     document.getElementById('haveCav').value = 0;
     document.getElementById('haveArc').value = 0;
     document.getElementById('rallyCapacity').value = '';
-    computeAll();
-  });
-
-  useAsTargetBtn.addEventListener('click', ()=>{
-    const vals = currentRatioRounded();
-    if(!vals) return;
-    let mine = PRESETS.find(p=>p.id==='mine');
-    if(mine){
-      Object.assign(mine, vals);
-    } else {
-      mine = {id:'mine', name:'My current ratio', ...vals};
-      PRESETS.unshift(mine);
-    }
-    activePresetId = 'mine';
-    renderPresetSelect();
-    renderPresetTable();
     computeAll();
   });
 
