@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bear Trap Joiner Calc</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;900&family=JetBrains+Mono:wght@500;600;700&display=swap">
 <style>
@@ -19,12 +24,18 @@
   }
 
   *{box-sizing:border-box;}
+  html, body{
+    max-width:100%;
+    overflow-x:hidden;
+  }
   body{
     background:var(--bg);
     color:var(--body);
     font-family:'Archivo',system-ui,sans-serif;
     line-height:1.6;
     -webkit-font-smoothing:antialiased;
+    margin:0;
+    -webkit-text-size-adjust:100%;
   }
   html{scroll-behavior:smooth;}
 
@@ -664,6 +675,8 @@
     line-height:1.8;
   }
 </style>
+</head>
+<body>
 
 <div class="topbar">
   <div class="topbar-title">🐻 KINGSHOT <span>/ BEAR TRAP</span></div>
@@ -1130,3 +1143,5 @@
   renderPresetTable();
   computeAll();
 </script>
+</body>
+</html>
