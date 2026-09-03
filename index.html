@@ -335,6 +335,23 @@
     font-weight:600;
   }
 
+  .stock-note{
+    background:var(--surface-2);
+    border:1px solid var(--border-2);
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:12.5px;
+    color:var(--body);
+    line-height:1.55;
+    margin-bottom:18px;
+  }
+  .stock-note b{color:var(--periwinkle);font-weight:700;}
+  .stock-note.stock-ok{
+    border-color:rgba(74,222,155,0.3);
+    background:rgba(74,222,155,0.06);
+  }
+  .stock-note.stock-ok b{color:var(--mint);}
+
   .check-row{
     display:flex;
     gap:11px;
@@ -739,8 +756,20 @@
           <label>Rallies you join</label>
           <input class="num-input" type="text" inputmode="numeric" id="rallyCount" value="3">
         </div>
+        <div class="troop-input-row">
+          <label>Infantry you have</label>
+          <input class="num-input" type="text" inputmode="numeric" id="haveInf" value="" placeholder="optional">
+        </div>
+        <div class="troop-input-row">
+          <label>Cavalry you have</label>
+          <input class="num-input" type="text" inputmode="numeric" id="haveCav" value="" placeholder="optional">
+        </div>
+        <div class="troop-input-row">
+          <label>Archer you have</label>
+          <input class="num-input" type="text" inputmode="numeric" id="haveArc" value="" placeholder="optional">
+        </div>
       </div>
-      <div class="capacity-note">One march per hero — most joiners can be in 3 rallies at once.</div>
+      <div class="capacity-note">One march per hero — most joiners can be in 3 rallies at once. Add your troop counts and the send numbers below respect what you actually own.</div>
     </div>
 
     <!-- ---- the best ratio (the shout) ---- -->
@@ -758,6 +787,7 @@
     <!-- ---- what to send ---- -->
     <div class="card" style="margin-top:24px;">
       <div class="eyebrow" style="margin-bottom:16px;"><span class="dot"></span>Send per rally</div>
+      <div id="sendNote"></div>
       <div class="breakdown" id="sendBreakdownArea"></div>
       <div class="formula-box" id="sendTotalBox"></div>
     </div>
@@ -805,21 +835,7 @@
     <!-- ---- what to train ---- -->
     <div class="card" style="margin-top:24px;">
       <div class="eyebrow" style="margin-bottom:16px;"><span class="dot"></span>What to train</div>
-      <p class="adv-note" style="margin-top:0;">To fill every rally at the best ratio, enter what you already have.</p>
-      <div class="troop-inputs" style="margin-bottom:18px;">
-        <div class="troop-input-row">
-          <label>Infantry you have</label>
-          <input class="num-input" type="text" inputmode="numeric" id="haveInf" value="" placeholder="0">
-        </div>
-        <div class="troop-input-row">
-          <label>Cavalry you have</label>
-          <input class="num-input" type="text" inputmode="numeric" id="haveCav" value="" placeholder="0">
-        </div>
-        <div class="troop-input-row">
-          <label>Archer you have</label>
-          <input class="num-input" type="text" inputmode="numeric" id="haveArc" value="" placeholder="0">
-        </div>
-      </div>
+      <p class="adv-note" style="margin-top:0;">What's missing before you could fill every rally at the ideal ratio.</p>
 
       <div class="train-summary">
         <div class="train-summary-num" id="trainNeedNum">0</div>
@@ -988,6 +1004,7 @@
   const bestShout = $('bestShout');
   const bestSub = $('bestSub');
   const sendBreakdownArea = $('sendBreakdownArea');
+  const sendNote = $('sendNote');
   const sendTotalBox = $('sendTotalBox');
   const breakdownArea = $('breakdownArea');
   const trainNeedNum = $('trainNeedNum');
@@ -1029,6 +1046,33 @@
     return {share, k, sumSq};
   }
 
+  /* Best split when you can't field the ideal one.
+     Maximise Σ k·√n subject to Σn = budget AND n[type] ≤ cap[type].
+     The unconstrained answer is n ∝ k². Any type that overshoots its cap
+     is pinned there and the rest re-solved on what budget is left — the
+     KKT conditions for this problem, so the result is a true optimum. */
+  function bestWithinStock(budget, cap, k){
+    const n = {inf:0, cav:0, arc:0};
+    let active = TYPES.filter(t=> k[t] > 0);
+    let left = budget;
+
+    for(let guard=0; guard<TYPES.length && active.length; guard++){
+      let sumSq = 0;
+      active.forEach(t=>{ sumSq += k[t]*k[t]; });
+      const over = [];
+      active.forEach(t=>{
+        const want = left * (k[t]*k[t]) / sumSq;
+        if(want > cap[t] + 1e-9) over.push(t);
+        else n[t] = want;
+      });
+      if(!over.length) return n;
+      over.forEach(t=>{ n[t] = cap[t]; left -= cap[t]; });
+      active = active.filter(t=> !over.includes(t));
+      if(left <= 0){ active.forEach(t=>{ n[t] = 0; }); return n; }
+    }
+    return n;
+  }
+
   /* Relative damage of any split, as a % of the optimum. */
   function scoreOf(shares, k, sumSq){
     let s = 0;
@@ -1060,25 +1104,54 @@
     $('segCav').style.width = (share.cav*100) + '%';
     $('segArc').style.width = (share.arc*100) + '%';
 
-    /* --- send per rally --- */
+    /* --- send per rally, limited by what you actually own --- */
     sendBreakdownArea.innerHTML = '';
-    const perRally = {};
-    TYPES.forEach(t=>{ perRally[t] = marchSize * share[t]; });
+    sendNote.innerHTML = '';
+    const stocked = TYPES.some(t=> have[t] > 0);
 
     if(marchSize<=0){
       sendBreakdownArea.innerHTML = `<div class="breakdown-row"><span class="k">Enter your march size</span><span class="v">—</span></div>`;
       sendTotalBox.innerHTML = '';
     } else {
+      /* Each rally gets an equal slice of your stock — splitting evenly
+         across marches beats loading one, since damage grows with √n. */
+      const cap = {};
+      TYPES.forEach(t=>{ cap[t] = stocked ? have[t]/rallyCount : Infinity; });
+      const totalCap = TYPES.reduce((s,t)=> s + (stocked ? cap[t] : 0), 0);
+      const budget = stocked ? Math.min(marchSize, totalCap) : marchSize;
+
+      const send = bestWithinStock(budget, cap, k);
+      const sentTotal = TYPES.reduce((s,t)=> s + send[t], 0);
+
       TYPES.forEach(t=>{
+        const shareOfSend = sentTotal>0 ? send[t]/sentTotal*100 : 0;
+        const pinned = stocked && send[t] >= cap[t] - 0.5 && cap[t] < Infinity;
         const row = document.createElement('div');
         row.className = 'breakdown-row';
         row.innerHTML = `
-          <span class="k">${TYPE_LABEL[t]}</span>
-          <span class="v">${fmt(perRally[t])}<small>${pct[t]}% of the march</small></span>
+          <span class="k">${TYPE_LABEL[t]}${pinned ? '<span class="set-tag">ALL YOU HAVE</span>' : ''}</span>
+          <span class="v">${fmt(send[t])}<small>${shareOfSend.toFixed(0)}% of the march</small></span>
         `;
         sendBreakdownArea.appendChild(row);
       });
-      sendTotalBox.innerHTML = `<b>${fmt(marchSize)} per rally × ${rallyCount} ${rallyCount===1?'rally':'rallies'} = ${fmt(marchSize*rallyCount)} troops in the field</b>`;
+
+      /* How good is this split, given the stock limit? */
+      if(stocked && sentTotal>0){
+        const actualShares = {};
+        TYPES.forEach(t=>{ actualShares[t] = send[t]/sentTotal; });
+        const rel = scoreOf(actualShares, k, sumSq) * 100;
+        const short = budget < marchSize - 0.5;
+        if(rel < 99.5 || short){
+          sendNote.innerHTML = `<div class="stock-note">
+            <b>${rel.toFixed(1)}%</b> of the damage the ideal ratio would do.
+            ${short ? `You can only fill ${fmt(budget)} of your ${fmt(marchSize)} march — you don't have enough troops for ${rallyCount} full ${rallyCount===1?'march':'marches'}.` : `You don't hold enough of every type to hit ${pct.inf} / ${pct.cav} / ${pct.arc}, so this is the best split from your stock.`}
+          </div>`;
+        } else {
+          sendNote.innerHTML = `<div class="stock-note stock-ok"><b>Full ideal ratio.</b> You have enough of every type to send the best possible split.</div>`;
+        }
+      }
+
+      sendTotalBox.innerHTML = `<b>${fmt(sentTotal)} per rally × ${rallyCount} ${rallyCount===1?'rally':'rallies'} = ${fmt(sentTotal*rallyCount)} troops in the field</b>`;
     }
 
     /* --- what to train, to fill every rally at this ratio --- */
