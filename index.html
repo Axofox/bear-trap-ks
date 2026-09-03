@@ -807,15 +807,14 @@
           <input class="num-input" type="text" inputmode="numeric" id="haveArc" value="" placeholder="optional">
         </div>
       </div>
-      <div class="capacity-note"><b style="color:var(--body)">March size is what you personally send</b> — not the rally's total capacity, which counts the leader and every other joiner too. One march per hero, so most joiners can fill 3 rallies at once.</div>
       <div id="inputWarn"></div>
     </div>
 
     <!-- ---- the best ratio (the shout) ---- -->
     <div class="result-card">
       <div class="result-label mono">Best ratio · Inf / Cav / Arc</div>
-      <div class="result-number" id="bestShout">3 / 31 / 66</div>
-      <div class="result-sub" id="bestSub">BASE STATS ONLY — ADD YOUR BONUSES BELOW</div>
+      <div class="result-number" id="bestShout">0 / 0 / 0</div>
+      <div class="result-sub" id="bestSub">ENTER YOUR DETAILS ABOVE</div>
       <div class="ratio-bar" id="ratioBar">
         <div class="ratio-bar-seg" id="segInf" style="background:rgba(107,138,255,0.35);"></div>
         <div class="ratio-bar-seg" id="segCav" style="background:rgba(107,138,255,0.65);"></div>
@@ -1135,14 +1134,22 @@
     const {share, k, sumSq} = optimalShares();
     const pct = roundedPct(share);
 
-    bestShout.textContent = `${pct.inf} / ${pct.cav} / ${pct.arc}`;
-    bestSub.textContent = anyBonusSet()
-      ? 'OPTIMISED FOR YOUR ATTACK + LETHALITY'
-      : 'BASE STATS ONLY — ADD YOUR BONUSES BELOW';
+    /* Nothing entered yet — don't assert an answer the user didn't ask for. */
+    const hasInput = marchSize > 0 || TYPES.some(t=> have[t] > 0) || anyBonusSet();
 
-    $('segInf').style.width = (share.inf*100) + '%';
-    $('segCav').style.width = (share.cav*100) + '%';
-    $('segArc').style.width = (share.arc*100) + '%';
+    if(!hasInput){
+      bestShout.textContent = '0 / 0 / 0';
+      bestSub.textContent = 'ENTER YOUR DETAILS ABOVE';
+      ['segInf','segCav','segArc'].forEach(id=>{ $(id).style.width = '0%'; });
+    } else {
+      bestShout.textContent = `${pct.inf} / ${pct.cav} / ${pct.arc}`;
+      bestSub.textContent = anyBonusSet()
+        ? "TUNED TO YOUR LEADER'S STATS"
+        : 'GENERIC BASELINE — ADD LEADER STATS TO TUNE';
+      $('segInf').style.width = (share.inf*100) + '%';
+      $('segCav').style.width = (share.cav*100) + '%';
+      $('segArc').style.width = (share.arc*100) + '%';
+    }
 
     /* --- send per rally, limited by what you actually own --- */
     sendBreakdownArea.innerHTML = '';
@@ -1158,6 +1165,16 @@
         title: `Join 3 rallies, not ${rallyCount} — worth ~${gain.toFixed(0)}% more damage`,
         body: `Damage grows with the square root of troops per march, so the same troops spread across 3 marches
           always beat ${rallyCount === 1 ? 'one loaded march' : rallyCount+' marches'}. This is worth far more than any ratio tweak.`
+      });
+    }
+    const withBonus = TYPES.filter(t=> atk[t]!==0 || leth[t]!==0);
+    if(withBonus.length && withBonus.length < 3){
+      const missing = TYPES.filter(t=> !withBonus.includes(t)).map(t=> TYPE_LABEL[t]).join(' and ');
+      warns.push({
+        title: `Add ${missing} stats too, or the ratio is wrong`,
+        body: `${missing} ${withBonus.length===2?'is':'are'} still on 0%, so the maths treats ${withBonus.length===2?'it':'them'}
+          as worthless and pushes almost everything into the types you did fill in. Enter all six numbers, or clear them
+          all and use the generic baseline.`
       });
     }
     if(stocked && marchSize > totalHave){
