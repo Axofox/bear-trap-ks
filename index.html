@@ -267,12 +267,6 @@
     color:var(--dim);
     margin-left:6px;
   }
-  .capacity-note{
-    font-size:12px;
-    color:var(--dim);
-    line-height:1.55;
-    margin-top:8px;
-  }
 
 
   /* ---- personalise (collapsible) ---- */
@@ -334,6 +328,24 @@
     color:var(--heading);
     font-weight:600;
   }
+
+  select.cc-select{
+    width:150px;
+    padding:11px 12px;
+    font-size:16px;
+    background-position:right 10px center;
+  }
+  .cc-hint{
+    background:var(--surface-2);
+    border:1px solid var(--border-2);
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:12.5px;
+    color:var(--dim);
+    line-height:1.55;
+    margin-top:12px;
+  }
+  .cc-hint b{color:var(--heading);font-weight:600;}
 
   .input-warn{
     background:rgba(224,166,79,0.08);
@@ -591,108 +603,8 @@
   }
 
   /* ================= EXAMPLES ================= */
-  #examples .dot{background:var(--mint);}
 
-  .example{
-    display:flex;flex-direction:column;
-    gap:0;
-    margin-bottom:22px;
-  }
-  .shot-card{
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:14px;
-    padding:14px;
-  }
-  .shot-frame{
-    position:relative;
-    background:var(--surface-2);
-    border:1px solid var(--border-2);
-    border-radius:10px;
-    aspect-ratio:9/14;
-    max-width:230px;
-    margin:0 auto;
-    padding:14px 12px;
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-  }
-  .shot-placeholder-tag{
-    position:absolute;top:10px;right:10px;
-    font-family:'JetBrains Mono',monospace;
-    font-size:8.5px;
-    letter-spacing:0.06em;
-    color:var(--dim);
-    border:1px solid var(--border-2);
-    border-radius:4px;
-    padding:2px 5px;
-    background:var(--surface);
-  }
-  .shot-report-title{
-    font-family:'JetBrains Mono',monospace;
-    font-size:9px;
-    letter-spacing:0.08em;
-    color:var(--dim);
-    margin-bottom:16px;
-  }
-  .shot-bars{
-    display:flex;flex-direction:column;gap:10px;
-    margin-bottom:auto;
-  }
-  .shot-bar-row{
-    display:flex;flex-direction:column;gap:4px;
-  }
-  .shot-bar-label{
-    display:flex;justify-content:space-between;
-    font-family:'JetBrains Mono',monospace;
-    font-size:8.5px;
-    color:var(--dim);
-  }
-  .shot-bar-label b{color:var(--heading);font-weight:700;}
-  .shot-bar-track{
-    height:6px;border-radius:3px;
-    background:var(--surface-3);
-    border:1px solid var(--border-2);
-    overflow:hidden;
-  }
-  .shot-bar-fill{height:100%;border-radius:3px;}
-  .shot-stat-label{
-    font-family:'JetBrains Mono',monospace;
-    font-size:8.5px;color:var(--dim);
-    margin-top:16px;
-  }
-  .shot-stat-value{
-    font-family:'Archivo',sans-serif;
-    font-weight:900;
-    font-size:26px;
-    color:var(--heading);
-    letter-spacing:-0.02em;
-  }
-  .shot-annot{
-    display:flex;align-items:center;gap:6px;
-    margin-top:6px;
-    font-family:'JetBrains Mono',monospace;
-    font-size:9.5px;
-    color:var(--mint);
-  }
-  .shot-annot .arrow{font-size:11px;}
 
-  .example-caption{
-    margin-top:12px;
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-  }
-  .example-caption .cap-mono{
-    font-family:'JetBrains Mono',monospace;
-    font-size:11px;
-    color:var(--mint);
-    letter-spacing:0.04em;
-  }
-  .example-caption .cap-body{
-    font-size:13px;
-    color:var(--body);
-  }
 
   /* ================= PRESETS TABLE ================= */
   #data .dot{background:var(--lime);}
@@ -764,7 +676,6 @@
   <div class="navpills">
     <a class="navpill" href="#calc">Calc</a>
     <a class="navpill" href="#how">Why</a>
-    <a class="navpill" href="#examples">Your stats</a>
     <a class="navpill" href="#data">Compare</a>
   </div>
 </div>
@@ -787,9 +698,14 @@
     <div class="card">
       <div class="troop-inputs">
         <div class="troop-input-row">
+          <label>Command Center level</label>
+          <select class="select-input cc-select" id="ccLevel"></select>
+        </div>
+        <div class="troop-input-row">
           <label>Your march size <span class="optional-tag">what you send</span></label>
           <input class="num-input" type="text" inputmode="numeric" id="marchSize" value="" placeholder="troops">
         </div>
+        <div id="ccHint"></div>
         <div class="troop-input-row">
           <label>Rallies you join <span class="optional-tag">3 is best</span></label>
           <input class="num-input" type="text" inputmode="numeric" id="rallyCount" value="3">
@@ -908,47 +824,6 @@
     </div>
   </section>
 
-  <!-- ================= WHERE TO FIND YOUR NUMBERS ================= -->
-  <section id="examples">
-    <div class="eyebrow"><span class="dot"></span>Where the numbers come from</div>
-    <h2>Ask your rally leader</h2>
-    <div class="intro">Two numbers per troop type, from the <b style="color:var(--heading)">leader's</b> battle report — a terror rally with their bear hero and gear is the easiest way to get them. Screenshot is a placeholder — swap in a real capture when you have one.</div>
-
-    <div class="example">
-      <div class="shot-card">
-        <div class="shot-frame">
-          <div class="shot-placeholder-tag mono">Mockup</div>
-          <div class="shot-report-title mono">Leader · Battle Report</div>
-          <div class="shot-bars">
-            <div class="shot-bar-row">
-              <div class="shot-bar-label"><span>ARCHER ATTACK</span><b>+184%</b></div>
-              <div class="shot-bar-track"><div class="shot-bar-fill" style="width:78%;background:var(--periwinkle);"></div></div>
-            </div>
-            <div class="shot-bar-row">
-              <div class="shot-bar-label"><span>ARCHER LETHALITY</span><b>+151%</b></div>
-              <div class="shot-bar-track"><div class="shot-bar-fill" style="width:64%;background:var(--periwinkle);"></div></div>
-            </div>
-            <div class="shot-bar-row">
-              <div class="shot-bar-label"><span>CAVALRY ATTACK</span><b>+120%</b></div>
-              <div class="shot-bar-track"><div class="shot-bar-fill" style="width:51%;background:rgba(107,138,255,0.65);"></div></div>
-            </div>
-            <div class="shot-bar-row">
-              <div class="shot-bar-label"><span>CAVALRY LETHALITY</span><b>+96%</b></div>
-              <div class="shot-bar-track"><div class="shot-bar-fill" style="width:41%;background:rgba(107,138,255,0.65);"></div></div>
-            </div>
-          </div>
-          <div class="shot-stat-label mono">Feeds the calculator as</div>
-          <div class="shot-stat-value">1 / 14 / 85</div>
-          <div class="shot-annot"><span class="arrow">&uarr;</span> archer-invested account, so the ratio leans archer</div>
-        </div>
-      </div>
-      <div class="example-caption">
-        <div class="cap-mono">Type the percentages, not the totals</div>
-        <div class="cap-body">Enter <b style="color:var(--heading)">184</b> and <b style="color:var(--heading)">151</b> for Archer, and so on for each type. A leader invested this heavily in archers puts every joiner near 1 / 14 / 85 &mdash; which is why the community &ldquo;Gen 4+&rdquo; ratio of 1 / 10 / 89 works in late-game kingdoms. It was never a universal rule, just what the formula gives when the leader's archer stats are far ahead. A different leader, a different ratio.</div>
-      </div>
-    </div>
-  </section>
-
   <!-- ================= RATIO PRESETS ================= -->
   <section id="data">
     <div class="eyebrow"><span class="dot"></span>Ratio comparison</div>
@@ -1019,6 +894,24 @@
      T7+ / TG3+ archers carry a second x1.1 on top of that. */
   const SKILL_MOD = {inf:1, cav:1, arc:1.10};
   const ARC_HIGH_TIER_MOD = 1.10;
+
+  /* Command Center level -> [rally capacity, march troops].
+     March size also grows with Regimental Expansion research and hero
+     levels, so this is a floor: the field stays editable. Showing rally
+     capacity beside it is what stops people entering the wrong one. */
+  const COMMAND_CENTER = [
+    ['1',1500,400], ['2',3500,700], ['3',5700,1000], ['4',8000,1400],
+    ['5',11500,1800], ['6',15000,2800], ['7',19000,3800], ['8',24000,5000],
+    ['9',29500,6500], ['10',35500,8000], ['11',43500,10500], ['12',52000,13000],
+    ['13',62000,16000], ['14',73500,19000], ['15',87500,22000], ['16',105000,27000],
+    ['17',120000,32000], ['18',140000,34000], ['19',165000,36000], ['20',195000,38000],
+    ['21',225000,40500], ['22',260000,43000], ['23',305000,46000], ['24',350000,48500],
+    ['25',400000,52000], ['26',470000,54500], ['27',550000,57000], ['28',630000,60500],
+    ['29',725000,64000], ['30',840000,67000],
+    ['TG1',865000,70500], ['TG2',890000,74000], ['TG3',915000,77500], ['TG4',940000,81000],
+    ['TG5',965000,84500], ['TG6',990000,88000], ['TG7',1000000,91500], ['TG8',1000000,95000],
+    ['TG9',1100000,98500], ['TG10',1100000,102000],
+  ];
 
   /* Community reference ratios, for the comparison table. */
   const REFERENCE_RATIOS = [
@@ -1222,7 +1115,11 @@
         TYPES.forEach(t=>{ actualShares[t] = send[t]/sentTotal; });
         const rel = scoreOf(actualShares, k, sumSq) * 100;
         const short = budget < marchSize - 0.5;
-        if(rel < 99.5 || short){
+        /* Constrained means a type got pinned to your stock — judge that
+           directly, not by a damage threshold, or a split that is capped
+           but barely costly gets reported as the ideal one. */
+        const constrained = TYPES.some(t=> Math.abs(send[t] - budget*share[t]) > 1);
+        if(constrained || short){
           sendNote.innerHTML = `<div class="stock-note">
             <b>${rel.toFixed(1)}%</b> of the damage the ideal ratio would do.
             ${short ? `You can only fill ${fmt(budget)} of your ${fmt(marchSize)} march — you don't have enough troops for ${rallyCount} full ${rallyCount===1?'march':'marches'}.` : `You don't hold enough of every type to hit ${pct.inf} / ${pct.cav} / ${pct.arc}, so this is the best split from your stock.`}
@@ -1294,6 +1191,26 @@
   function bindPct(id, apply){
     $(id).addEventListener('input', e=>{ apply(parsePct(e.target.value)); compute(); });
   }
+
+  /* Command Center picker fills march size and shows rally capacity next
+     to it, so the two can't be mixed up. */
+  const ccSelect = $('ccLevel');
+  const ccHint = $('ccHint');
+  ccSelect.innerHTML = '<option value="">— pick to fill march size —</option>' +
+    COMMAND_CENTER.map((r,i)=> `<option value="${i}">CC ${r[0]}</option>`).join('');
+  ccSelect.addEventListener('change', e=>{
+    const i = e.target.value;
+    if(i === ''){ ccHint.innerHTML = ''; return; }
+    const [label, rally, march] = COMMAND_CENTER[+i];
+    marchSize = march;
+    $('marchSize').value = march;
+    ccHint.innerHTML = `<div class="cc-hint">
+      At <b>CC ${label}</b> your march is <b>${fmt(march)}</b>.
+      The rally holds <b>${fmt(rally)}</b> in total — that bigger number is the whole rally,
+      not you. Research and hero levels push your march above ${fmt(march)}, so edit it if
+      the game shows more.</div>`;
+    compute();
+  });
 
   bindCount('marchSize', v=>{ marchSize = v; });
   bindCount('rallyCount', v=>{ rallyCount = Math.max(1, v||1); });
