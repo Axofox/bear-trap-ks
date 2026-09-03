@@ -336,20 +336,42 @@
   }
 
   .input-warn{
-    display:flex;
-    gap:9px;
-    align-items:flex-start;
     background:rgba(224,166,79,0.08);
     border:1px solid rgba(224,166,79,0.3);
     border-radius:10px;
+    margin-top:12px;
+    overflow:hidden;
+  }
+  .input-warn summary{
+    list-style:none;
+    cursor:pointer;
+    display:flex;
+    gap:9px;
+    align-items:flex-start;
     padding:12px 14px;
     font-size:12.5px;
+    font-weight:700;
     color:var(--warn);
-    line-height:1.55;
-    margin-top:12px;
+    line-height:1.5;
   }
-  .input-warn b{color:var(--warn);font-weight:700;}
-  .input-warn em{font-style:italic;}
+  .input-warn summary::-webkit-details-marker{display:none;}
+  .input-warn summary::after{
+    content:"+";
+    margin-left:auto;
+    padding-left:10px;
+    font-size:15px;
+    opacity:0.7;
+  }
+  .input-warn[open] summary::after{content:"–";}
+  .warn-icon{flex:none;}
+  .warn-body{
+    padding:0 14px 13px 37px;
+    font-size:12.5px;
+    color:var(--warn);
+    opacity:0.85;
+    line-height:1.55;
+  }
+  .warn-body em{font-style:italic;}
 
   .stock-note{
     background:var(--surface-2);
@@ -1132,15 +1154,24 @@
     const warns = [];
     if(rallyCount < 3){
       const gain = (Math.sqrt(3/rallyCount) - 1) * 100;
-      warns.push(`<b>Join 3 rallies, not ${rallyCount}.</b> The same troops split across 3 marches deal about
-        ${gain.toFixed(0)}% more damage than ${rallyCount === 1 ? 'one march' : rallyCount+' marches'} — damage grows with the
-        square root of troops per march, so spreading always wins. This is worth far more than any ratio tweak.`);
+      warns.push({
+        title: `Join 3 rallies, not ${rallyCount} — worth ~${gain.toFixed(0)}% more damage`,
+        body: `Damage grows with the square root of troops per march, so the same troops spread across 3 marches
+          always beat ${rallyCount === 1 ? 'one loaded march' : rallyCount+' marches'}. This is worth far more than any ratio tweak.`
+      });
     }
     if(stocked && marchSize > totalHave){
-      warns.push(`<b>That march size looks like the rally's capacity.</b> ${fmt(marchSize)} is more than every troop
-        you own (${fmt(totalHave)}). March size is only what <em>you</em> send in one march — check your own march screen.`);
+      warns.push({
+        title: `That march size looks like the rally's capacity`,
+        body: `${fmt(marchSize)} is more than every troop you own (${fmt(totalHave)}). March size is only what
+          <em>you</em> send in one march, not the whole rally — check your own march screen.`
+      });
     }
-    inputWarn.innerHTML = warns.map(w=> `<div class="input-warn">⚠ <span>${w}</span></div>`).join('');
+    inputWarn.innerHTML = warns.map(w=> `
+      <details class="input-warn">
+        <summary><span class="warn-icon">⚠</span><span>${w.title}</span></summary>
+        <div class="warn-body">${w.body}</div>
+      </details>`).join('');
 
     if(marchSize<=0){
       sendBreakdownArea.innerHTML = `<div class="breakdown-row"><span class="k">Enter your march size</span><span class="v">—</span></div>`;
