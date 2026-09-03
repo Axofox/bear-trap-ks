@@ -385,6 +385,23 @@
   }
   .warn-body em{font-style:italic;}
 
+  .march-cap{
+    margin-top:16px;
+    padding:12px 14px;
+    background:var(--surface-2);
+    border:1px solid var(--border-2);
+    border-radius:10px;
+    font-size:12.5px;
+    color:var(--body);
+    line-height:1.55;
+  }
+  .march-cap b{color:var(--periwinkle);font-weight:700;}
+  .march-cap.cap-ok{
+    border-color:rgba(74,222,155,0.3);
+    background:rgba(74,222,155,0.06);
+  }
+  .march-cap.cap-ok b{color:var(--mint);}
+
   .stock-note{
     background:var(--surface-2);
     border:1px solid var(--border-2);
@@ -743,6 +760,7 @@
       <div class="eyebrow" style="margin-bottom:16px;"><span class="dot"></span>Send per rally</div>
       <div id="sendNote"></div>
       <div class="breakdown" id="sendBreakdownArea"></div>
+      <div id="marchCapNote"></div>
       <div class="formula-box" id="sendTotalBox"></div>
     </div>
 
@@ -936,6 +954,7 @@
   const bestSub = $('bestSub');
   const sendBreakdownArea = $('sendBreakdownArea');
   const sendNote = $('sendNote');
+  const marchCapNote = $('marchCapNote');
   const inputWarn = $('inputWarn');
   const sendTotalBox = $('sendTotalBox');
   const breakdownArea = $('breakdownArea');
@@ -1146,6 +1165,29 @@
           sendNote.innerHTML = `<div class="stock-note stock-ok"><b>Full ideal ratio.</b>
             Put ${pct.inf} / ${pct.cav} / ${pct.arc} in each of your ${rallyCount}
             ${rallyCount===1?'march':'marches'} — you have enough of every type.</div>`;
+        }
+      }
+
+      /* How many full marches your stock covers at the ideal ratio, and
+         which type runs out first — the answer to "how many marches can
+         I actually fill with what I own". */
+      marchCapNote.innerHTML = '';
+      if(stocked && marchSize > 0){
+        const per = TYPES.filter(t=> share[t] > 0)
+          .map(t=> ({t, marches: have[t] / (marchSize * share[t])}));
+        if(per.length){
+          const limiter = per.reduce((a,b)=> a.marches < b.marches ? a : b);
+          const n = limiter.marches;
+          const shown = n < 10 ? n.toFixed(1) : Math.floor(n);
+          const enough = n >= rallyCount - 0.05;
+          marchCapNote.innerHTML = `<div class="march-cap ${enough ? 'cap-ok' : ''}">
+            Your troops fill <b>${shown}</b> ${(n>=1.95||n<0.95)?'marches':'march'} at this ratio${
+              enough
+                ? ` — enough for all ${rallyCount} of yours.`
+                : `, so ${rallyCount} ${rallyCount===1?'march':'marches'} spreads them thin.
+                   <b>${TYPE_LABEL[limiter.t]}</b> runs out first.`
+            }
+          </div>`;
         }
       }
 
