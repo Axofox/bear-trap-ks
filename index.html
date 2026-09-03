@@ -814,7 +814,7 @@
     <div class="result-card">
       <div class="result-label mono">Best ratio · Inf / Cav / Arc</div>
       <div class="result-number" id="bestShout">0 / 0 / 0</div>
-      <div class="result-sub" id="bestSub">ENTER YOUR DETAILS ABOVE</div>
+      <div class="result-sub" id="bestSub">YOUR BEST BEAR TRAP RATIO</div>
       <div class="ratio-bar" id="ratioBar">
         <div class="ratio-bar-seg" id="segInf" style="background:rgba(107,138,255,0.35);"></div>
         <div class="ratio-bar-seg" id="segCav" style="background:rgba(107,138,255,0.65);"></div>
@@ -1139,7 +1139,7 @@
 
     if(!hasInput){
       bestShout.textContent = '0 / 0 / 0';
-      bestSub.textContent = 'ENTER YOUR DETAILS ABOVE';
+      bestSub.textContent = 'YOUR BEST BEAR TRAP RATIO';
       ['segInf','segCav','segArc'].forEach(id=>{ $(id).style.width = '0%'; });
     } else {
       bestShout.textContent = `${pct.inf} / ${pct.cav} / ${pct.arc}`;
