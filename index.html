@@ -742,9 +742,9 @@
 
     <!-- ---- personalise ---- -->
     <details class="adv-card" id="advDetails">
-      <summary class="adv-summary mono">Personalise with your stats <span class="adv-hint">optional · changes the ratio</span></summary>
+      <summary class="adv-summary mono">Rally leader's stats <span class="adv-hint">optional · changes the ratio</span></summary>
       <div class="adv-body">
-        <p class="adv-note">Read the Attack and Lethality bonus for each troop type off your march screen. These are the only numbers that move your ratio.</p>
+        <p class="adv-note"><b style="color:var(--heading)">The leader's bonuses, not yours.</b> Everyone's troops fight using the rally leader's Attack and Lethality, so the best split depends on whoever is leading — ask them, or use your own numbers if you're leading. Easiest way to read them: call a terror rally with the hero and gear you'd use for bear, then take the stats off the battle report.</p>
 
         <div class="stat-grid">
           <div class="stat-head mono"></div>
@@ -818,7 +818,7 @@
       </div>
       <div class="how-item">
         <div class="how-num">02</div>
-        <p>So the best split follows <em>share ∝ (effective attack)²</em>. Your Attack% and Lethality% per type are what move it — <em>tier doesn't</em>, because all three types scale identically with tier.</p>
+        <p>So the best split follows <em>share ∝ (effective attack)²</em>. What moves it is the <em>rally leader's</em> Attack% and Lethality% per type — your troops fight with the leader's bonuses, not your own. <em>Tier doesn't</em> move it, because all three types scale identically with tier.</p>
       </div>
       <div class="how-item">
         <div class="how-num">03</div>
@@ -829,15 +829,15 @@
 
   <!-- ================= WHERE TO FIND YOUR NUMBERS ================= -->
   <section id="examples">
-    <div class="eyebrow"><span class="dot"></span>Where to find your numbers</div>
-    <h2>Reading it off your screen</h2>
-    <div class="intro">Two numbers per troop type, from the march screen when you join a rally. Screenshot is a placeholder — swap in a real capture when you have one.</div>
+    <div class="eyebrow"><span class="dot"></span>Where the numbers come from</div>
+    <h2>Ask your rally leader</h2>
+    <div class="intro">Two numbers per troop type, from the <b style="color:var(--heading)">leader's</b> battle report — a terror rally with their bear hero and gear is the easiest way to get them. Screenshot is a placeholder — swap in a real capture when you have one.</div>
 
     <div class="example">
       <div class="shot-card">
         <div class="shot-frame">
           <div class="shot-placeholder-tag mono">Mockup</div>
-          <div class="shot-report-title mono">March · Troop Bonuses</div>
+          <div class="shot-report-title mono">Leader · Battle Report</div>
           <div class="shot-bars">
             <div class="shot-bar-row">
               <div class="shot-bar-label"><span>ARCHER ATTACK</span><b>+184%</b></div>
@@ -863,7 +863,7 @@
       </div>
       <div class="example-caption">
         <div class="cap-mono">Type the percentages, not the totals</div>
-        <div class="cap-body">Enter <b style="color:var(--heading)">184</b> and <b style="color:var(--heading)">151</b> for Archer, and so on for each type. An account invested this heavily in archers lands near 1 / 14 / 85 &mdash; which is why the community &ldquo;Gen 4+&rdquo; ratio of 1 / 10 / 89 works for late-game accounts. It was never a universal rule, just what the formula gives when your archer stats are far ahead.</div>
+        <div class="cap-body">Enter <b style="color:var(--heading)">184</b> and <b style="color:var(--heading)">151</b> for Archer, and so on for each type. A leader invested this heavily in archers puts every joiner near 1 / 14 / 85 &mdash; which is why the community &ldquo;Gen 4+&rdquo; ratio of 1 / 10 / 89 works in late-game kingdoms. It was never a universal rule, just what the formula gives when the leader's archer stats are far ahead. A different leader, a different ratio.</div>
       </div>
     </div>
   </section>
@@ -902,7 +902,11 @@
         Base attack is 1 : 3 : 4 (Inf : Cav : Arc) at every tier. With no personal
         bonuses that lands on 3 / 31 / 66 and scores 10/10/80 at 96% — an optimum
         4.2% better. Both figures match the published Kingshot ratio calculators,
-        which is the check that this model is right.
+        which is the check that this model is right.<br><br>
+        The same formula is stated independently by
+        <a href="https://frakinator.streamlit.app/" style="color:var(--periwinkle);">Frakinator</a>,
+        a full battle simulator worth using if you want hero skills and troop
+        losses modelled too. This page only does the ratio — quickly, on a phone.
       </div>
     </div>
   </section>
