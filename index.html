@@ -297,6 +297,83 @@
   }
   .subhead:first-of-type{margin-top:20px;}
 
+  /* ---- personalise (collapsible) ---- */
+  .adv-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    margin-top:24px;
+    overflow:hidden;
+  }
+  .adv-summary{
+    list-style:none;
+    cursor:pointer;
+    padding:18px 20px;
+    font-size:11px;
+    color:var(--heading);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:8px;
+  }
+  .adv-summary::-webkit-details-marker{display:none;}
+  .adv-summary::after{
+    content:"+";
+    margin-left:auto;
+    color:var(--periwinkle);
+    font-size:15px;
+    font-weight:700;
+  }
+  details[open] .adv-summary::after{content:"–";}
+  .adv-hint{
+    color:var(--dim);
+    font-weight:500;
+    letter-spacing:0.06em;
+  }
+  .adv-body{
+    padding:0 20px 20px;
+  }
+  .adv-note{
+    font-size:12.5px;
+    color:var(--dim);
+    line-height:1.55;
+    margin:0 0 18px;
+  }
+
+  .stat-grid{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    gap:10px;
+    align-items:center;
+  }
+  .stat-head{
+    font-size:9.5px;
+    color:var(--dim);
+    text-align:right;
+  }
+  .stat-label{
+    font-size:13.5px;
+    color:var(--heading);
+    font-weight:600;
+  }
+
+  .tier-row{margin-top:20px;}
+  .tier-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+  }
+  .tier-cell{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  select.tier-select{
+    padding:9px 10px;
+    font-size:16px;
+    background-position:right 8px center;
+  }
+
   /* prevent iOS auto-zoom-on-focus and spinner-driven layout shift on all form controls */
   input, select, textarea{
     font-size:16px;
@@ -700,38 +777,28 @@
   <!-- ================= CALCULATOR ================= -->
   <section id="calc">
     <div class="eyebrow"><span class="dot"></span>Calculator</div>
-    <h2>Your troops, your ratio</h2>
-    <div class="intro">Type in what you actually have of each troop type, plus your rally capacity if you know it. You'll get your current ratio immediately below, then how many to send now and train next further down.</div>
+    <h2>Your best joiner ratio</h2>
+    <div class="intro">Enter your march size and (optionally) your troop stats. The ratio below is calculated from the Bear Trap damage formula — it's the split that deals the most damage per march, not a rule of thumb.</div>
 
     <div class="card">
       <div class="troop-inputs">
         <div class="troop-input-row">
-          <label>Infantry you have</label>
-          <input class="num-input" type="number" min="0" step="1" id="haveInf" value="0">
+          <label>March size <span class="optional-tag">per rally</span></label>
+          <input class="num-input" type="text" inputmode="numeric" id="marchSize" value="" placeholder="e.g. 157000">
         </div>
         <div class="troop-input-row">
-          <label>Cavalry you have</label>
-          <input class="num-input" type="number" min="0" step="1" id="haveCav" value="0">
-        </div>
-        <div class="troop-input-row">
-          <label>Archer you have</label>
-          <input class="num-input" type="number" min="0" step="1" id="haveArc" value="0">
+          <label>Rallies you join</label>
+          <input class="num-input" type="text" inputmode="numeric" id="rallyCount" value="3">
         </div>
       </div>
-      <div class="capacity-row">
-        <div class="troop-input-row">
-          <label>Rally capacity <span class="optional-tag">optional</span></label>
-          <input class="num-input" type="number" min="0" step="1" id="rallyCapacity" value="" placeholder="no cap">
-        </div>
-        <div class="capacity-note">Your march / rally troop limit for this event — the ratio comes from this cap, so both results below stop growing once they hit it. Leave blank if you don't know it yet.</div>
-      </div>
+      <div class="capacity-note">One march per hero — most joiners can be in 3 rallies at once. Splitting troops across 3 marches beats stacking them into 1, because damage scales with the square root of troops per march.</div>
     </div>
 
-    <!-- ---- your current ratio (the shout) ---- -->
+    <!-- ---- the best ratio (the shout) ---- -->
     <div class="result-card">
-      <div class="result-label mono">Your current ratio · Inf / Cav / Arc</div>
-      <div class="result-number" id="ratioShout">0 / 0 / 0</div>
-      <div class="result-sub" id="ratioSub">ENTER YOUR TROOP COUNTS ABOVE</div>
+      <div class="result-label mono">Best ratio · Inf / Cav / Arc</div>
+      <div class="result-number" id="bestShout">3 / 31 / 66</div>
+      <div class="result-sub" id="bestSub">BASE STATS ONLY — ADD YOUR BONUSES BELOW</div>
       <div class="ratio-bar" id="ratioBar">
         <div class="ratio-bar-seg" id="segInf" style="background:rgba(107,138,255,0.35);"></div>
         <div class="ratio-bar-seg" id="segCav" style="background:rgba(107,138,255,0.65);"></div>
@@ -739,35 +806,77 @@
       </div>
     </div>
 
-    <div class="reset-row" style="margin-top:-4px;margin-bottom:8px;">
-      <button class="pill-btn pill-periwinkle no-arrow" id="resetBtn" type="button">Reset troops</button>
+    <!-- ---- what to send ---- -->
+    <div class="card" style="margin-top:24px;">
+      <div class="eyebrow" style="margin-bottom:16px;"><span class="dot"></span>Send per rally</div>
+      <div class="breakdown" id="sendBreakdownArea"></div>
+      <div class="formula-box" id="sendTotalBox"></div>
     </div>
 
-    <!-- ---- target ratio: send now + train next (secondary, quieter) ---- -->
-    <div class="card" style="margin-top:28px;">
-      <div class="eyebrow" style="margin-bottom:16px;"><span class="dot"></span>Best ratio to score higher</div>
-      <p style="font-size:13px;color:var(--body);margin:0 0 16px;line-height:1.55;">Not your current split — the ratio to aim for, sourced from what actually maximizes Bear Trap damage. See the <a href="#data" style="color:var(--periwinkle);">Ratios</a> section for where these come from.</p>
-      <label class="field-label mono">Pick a ratio</label>
-      <select class="select-input" id="presetSelect"></select>
-      <div class="ratio-preview mono" id="ratioPreview"></div>
+    <!-- ---- personalise ---- -->
+    <details class="adv-card" id="advDetails">
+      <summary class="adv-summary mono">Personalise with your stats <span class="adv-hint">optional · changes the ratio</span></summary>
+      <div class="adv-body">
+        <p class="adv-note">Open your rally / march screen and read the Attack and Lethality bonus for each troop type. Base attack is always 1 : 3 : 4 (Inf : Cav : Arc) at every tier, so tier alone doesn't move the ratio — these bonuses do.</p>
 
-      <div id="warnArea"></div>
+        <div class="stat-grid">
+          <div class="stat-head mono"></div>
+          <div class="stat-head mono">Attack %</div>
+          <div class="stat-head mono">Lethality %</div>
 
-      <div class="subhead mono">Send on this rally</div>
-      <div class="train-summary">
-        <div class="train-summary-num" id="sendNowNum">0</div>
-        <div class="train-summary-label mono">troops to send now</div>
+          <div class="stat-label">Infantry</div>
+          <input class="pct-input" type="text" inputmode="decimal" id="atkInf" value="0">
+          <input class="pct-input" type="text" inputmode="decimal" id="lethInf" value="0">
+
+          <div class="stat-label">Cavalry</div>
+          <input class="pct-input" type="text" inputmode="decimal" id="atkCav" value="0">
+          <input class="pct-input" type="text" inputmode="decimal" id="lethCav" value="0">
+
+          <div class="stat-label">Archer</div>
+          <input class="pct-input" type="text" inputmode="decimal" id="atkArc" value="0">
+          <input class="pct-input" type="text" inputmode="decimal" id="lethArc" value="0">
+        </div>
+
+        <div class="tier-row">
+          <label class="field-label mono" style="margin-bottom:6px;">Troop tier <span class="optional-tag">only matters if your types differ</span></label>
+          <div class="tier-grid">
+            <div class="tier-cell"><span class="stat-label">Inf</span><select class="select-input tier-select" id="tierInf"></select></div>
+            <div class="tier-cell"><span class="stat-label">Cav</span><select class="select-input tier-select" id="tierCav"></select></div>
+            <div class="tier-cell"><span class="stat-label">Arc</span><select class="select-input tier-select" id="tierArc"></select></div>
+          </div>
+        </div>
       </div>
-      <div class="breakdown" id="sendBreakdownArea"></div>
+    </details>
 
-      <div class="subhead mono">Train for next time</div>
+    <!-- ---- what to train ---- -->
+    <div class="card" style="margin-top:24px;">
+      <div class="eyebrow" style="margin-bottom:16px;"><span class="dot"></span>What to train</div>
+      <p class="adv-note" style="margin-top:0;">To fill every rally at the best ratio, enter what you already have.</p>
+      <div class="troop-inputs" style="margin-bottom:18px;">
+        <div class="troop-input-row">
+          <label>Infantry you have</label>
+          <input class="num-input" type="text" inputmode="numeric" id="haveInf" value="" placeholder="0">
+        </div>
+        <div class="troop-input-row">
+          <label>Cavalry you have</label>
+          <input class="num-input" type="text" inputmode="numeric" id="haveCav" value="" placeholder="0">
+        </div>
+        <div class="troop-input-row">
+          <label>Archer you have</label>
+          <input class="num-input" type="text" inputmode="numeric" id="haveArc" value="" placeholder="0">
+        </div>
+      </div>
+
       <div class="train-summary">
         <div class="train-summary-num" id="trainNeedNum">0</div>
         <div class="train-summary-label mono">more troops to train</div>
       </div>
       <div class="breakdown" id="breakdownArea"></div>
-
       <div class="formula-box" id="formulaBox"></div>
+    </div>
+
+    <div class="reset-row">
+      <button class="pill-btn pill-periwinkle no-arrow" id="resetBtn" type="button">Reset</button>
     </div>
   </section>
 
@@ -778,15 +887,15 @@
     <div class="how-list">
       <div class="how-item">
         <div class="how-num">01</div>
-        <p>Archers hit hardest, so joiner ratios lean archer-heavy — but Bear Trap damage scales with a <em>square root of army size</em>, so stacking one type past a point gives diminishing returns. There's no single fixed ratio, only good defaults.</p>
+        <p>Each troop type's damage grows with the <em>square root of how many you send</em>. Doubling your archers doesn't double archer damage — it multiplies it by about 1.41. That's why 100% archers loses to a mix.</p>
       </div>
       <div class="how-item">
         <div class="how-num">02</div>
-        <p>The <em>your ratio</em> readout above just shows what your current Infantry/Cavalry/Archer counts already add up to as percentages — no target involved, just where you stand right now.</p>
+        <p>Because of that curve, the best split works out to <em>share ∝ (effective attack)²</em>. Base attack is 1 : 3 : 4 and archers get +10% on the Bear, so with no bonuses it lands on 3 / 31 / 66. Your own Attack% and Lethality% per type shift it from there.</p>
       </div>
       <div class="how-item">
         <div class="how-num">03</div>
-        <p>The <em>best ratio to score higher</em> card checks that against the ratio that actually maximizes damage, plus your <em>rally capacity</em> — the march limit it's built for. "Send now" is capped by whichever runs out first, troops or capacity; "train next" tells you what to grow, never past that same cap.</p>
+        <p>Tier doesn't change your ratio — all three types scale identically with tier. And <em>three rallies beat one</em>: the same troops split across 3 marches deal about 73% more damage than crammed into a single march.</p>
       </div>
     </div>
   </section>
@@ -849,29 +958,41 @@
 
   <!-- ================= RATIO PRESETS ================= -->
   <section id="data">
-    <div class="eyebrow"><span class="dot"></span>Ratio presets</div>
-    <h2>Your alliance's target ratios</h2>
-    <div class="intro">Seeded with two ratios published by community Kingshot guides — not one official standard, since the true optimum depends on your rally leader's own stats. Edit, rename, or add rows to match what your alliance actually calls out. Percentages should add up to 100; the calculator above pulls from whichever preset is selected.</div>
+    <div class="eyebrow"><span class="dot"></span>Ratio comparison</div>
+    <h2>Why this beats the usual advice</h2>
+    <div class="intro">Every ratio scored against your calculated optimum, using the same damage model. Update your stats in the calculator and these move with it.</div>
 
     <div class="table-scroll">
       <table>
         <thead>
           <tr>
-            <th>Preset name</th>
-            <th>Inf %</th>
-            <th>Cav %</th>
-            <th>Arc %</th>
-            <th>Sum</th>
-            <th></th>
+            <th>Ratio</th>
+            <th>Inf / Cav / Arc</th>
+            <th>Damage</th>
           </tr>
         </thead>
-        <tbody id="presetTableBody"></tbody>
+        <tbody id="compareBody"></tbody>
       </table>
     </div>
 
     <div class="legend">
-      <button class="pill-btn pill-lime no-arrow" id="addPresetBtn" type="button">+ Add preset</button>
-      <span class="chip chip-warn">⚠ sum ≠ 100% — check the row</span>
+      <span class="chip">Damage = % of your best possible march</span>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <div class="eyebrow" style="margin-bottom:12px;"><span class="dot"></span>The math</div>
+      <div class="formula-box" style="margin-top:0;padding-top:0;border-top:none;">
+        <b>damage[type] = √(troops[type] × army_min) × attack[type] ⁄ defense ⁄ 100 × skillmod</b><br>
+        over 10 rounds · archers get skillmod 1.10 against the Bear<br><br>
+        Because each type's damage grows with the <b>square root</b> of its troop count,
+        piling everything into archers hits diminishing returns. Maximising the total
+        with a fixed march size gives a closed form:<br><br>
+        <b>share[type] = k[type]² ⁄ Σ k²</b> &nbsp; where &nbsp; <b>k[type] = attack × (1 + attack%) × (1 + lethality%) × skillmod</b><br><br>
+        Base attack is 1 : 3 : 4 (Inf : Cav : Arc) at every tier, so with no personal
+        bonuses this lands on 3 / 31 / 66 — and scores the classic 10/10/80 at 96%,
+        i.e. the optimum is 4.2% better. Both figures match the published
+        Kingshot ratio calculators, which is the check that this model is right.
+      </div>
     </div>
   </section>
 
@@ -885,264 +1006,225 @@
   const TYPES = ['inf','cav','arc'];
   const TYPE_LABEL = {inf:'Infantry', cav:'Cavalry', arc:'Archer'};
 
-  let PRESETS = [
-    {id:'p1', name:'Joiner 0/20/80', inf:0, cav:20, arc:80},
-    {id:'p2', name:'Joiner 20/30/50', inf:20, cav:30, arc:50},
+  /* Base attack per troop, TG0, from community-extracted troop base stats.
+     Defense and Lethality are a flat 10 for every troop; only Attack and
+     Health move with tier. The Inf:Cav:Arc attack ratio is 1:3:4 at every
+     tier, which is why tier alone never shifts the optimal split. */
+  const BASE_ATTACK = {
+    inf:[63,94,132,172,206,243,287,339,400,472,566],
+    cav:[189,283,397,516,619,730,862,1017,1200,1416,1699],
+    arc:[252,378,529,688,825,974,1149,1356,1600,1888,2266],
+  };
+  /* Archers deal +10% against infantry, and the Bear counts as infantry. */
+  const SKILL_MOD = {inf:1, cav:1, arc:1.10};
+
+  /* Community reference ratios, for the comparison table. */
+  const REFERENCE_RATIOS = [
+    {name:'Gen 4+ meta', inf:1,  cav:10, arc:89},
+    {name:'Gen 3 classic', inf:10, cav:10, arc:80},
+    {name:'Gen 2', inf:10, cav:20, arc:70},
+    {name:'Joiner 0/20/80', inf:0, cav:20, arc:80},
+    {name:'All archers', inf:0, cav:0, arc:100},
+    {name:'Even split', inf:34, cav:33, arc:33},
   ];
-  let activePresetId = 'p1';
-  let nextPresetNum = 3;
 
+  let marchSize = 0;
+  let rallyCount = 3;
   let have = {inf:0, cav:0, arc:0};
-  let capacity = 0;
+  let atk  = {inf:0, cav:0, arc:0};
+  let leth = {inf:0, cav:0, arc:0};
+  let tier = {inf:10, cav:10, arc:10};   // 1-indexed tier number
 
-  const presetSelect = document.getElementById('presetSelect');
-  const ratioPreview = document.getElementById('ratioPreview');
-  const presetTableBody = document.getElementById('presetTableBody');
-  const breakdownArea = document.getElementById('breakdownArea');
-  const sendBreakdownArea = document.getElementById('sendBreakdownArea');
-  const formulaBox = document.getElementById('formulaBox');
-  const warnArea = document.getElementById('warnArea');
-  const ratioShout = document.getElementById('ratioShout');
-  const ratioSub = document.getElementById('ratioSub');
-  const trainNeedNum = document.getElementById('trainNeedNum');
-  const sendNowNum = document.getElementById('sendNowNum');
+  const $ = id => document.getElementById(id);
+  const bestShout = $('bestShout');
+  const bestSub = $('bestSub');
+  const sendBreakdownArea = $('sendBreakdownArea');
+  const sendTotalBox = $('sendTotalBox');
+  const breakdownArea = $('breakdownArea');
+  const trainNeedNum = $('trainNeedNum');
+  const formulaBox = $('formulaBox');
+  const compareBody = $('compareBody');
 
-  function fmt(n){
-    return Math.round(n).toLocaleString('en-US');
+  function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
+
+  /* Accepts "93,150", "93.150", "93 150" — strips every separator so a
+     locale that uses commas for thousands can't be read as a decimal. */
+  function parseCount(raw){
+    const digits = String(raw).replace(/[^0-9]/g,'');
+    return digits ? parseInt(digits,10) : 0;
+  }
+  function parsePct(raw){
+    const cleaned = String(raw).replace(/[^0-9.,-]/g,'').replace(',','.');
+    const v = parseFloat(cleaned);
+    return isNaN(v) ? 0 : v;
   }
 
-  function getActivePreset(){
-    return PRESETS.find(p=>p.id===activePresetId) || PRESETS[0];
+  /* Effective per-troop attack: base attack for the tier, scaled by the
+     player's own Attack% and Lethality% for that type, times the archer
+     bonus against the Bear. Damage per type is proportional to this. */
+  function coefficient(t){
+    const base = BASE_ATTACK[t][Math.min(10, Math.max(0, tier[t]-1))];
+    return base * (1 + atk[t]/100) * (1 + leth[t]/100) * SKILL_MOD[t];
   }
 
-  function renderPresetSelect(){
-    const prevValue = activePresetId;
-    presetSelect.innerHTML = PRESETS.map(p=>
-      `<option value="${p.id}">${p.name} — ${p.inf}/${p.cav}/${p.arc}</option>`
-    ).join('');
-    if(PRESETS.some(p=>p.id===prevValue)){
-      presetSelect.value = prevValue;
-    } else {
-      activePresetId = PRESETS[0].id;
-      presetSelect.value = activePresetId;
-    }
+  /* Damage over a march is  Σ k[t] × √(troops[t]) × constant.
+     Maximising that with troops[t] summing to the march size gives
+     share[t] ∝ k[t]², and a peak score of √(Σ k[t]²). */
+  function optimalShares(){
+    const k = {}, sq = {};
+    let sumSq = 0;
+    TYPES.forEach(t=>{ k[t] = coefficient(t); sq[t] = k[t]*k[t]; sumSq += sq[t]; });
+    const share = {};
+    TYPES.forEach(t=>{ share[t] = sumSq>0 ? sq[t]/sumSq : 0; });
+    return {share, k, sumSq};
   }
 
-  function renderPresetTable(){
-    presetTableBody.innerHTML = '';
-    PRESETS.forEach(p=>{
-      const sum = p.inf + p.cav + p.arc;
-      const sumOff = Math.abs(sum-100) > 0.01;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><input class="name-input" type="text" value="${p.name}" data-id="${p.id}" data-field="name"></td>
-        <td><input class="pct-input" type="number" min="0" max="100" step="1" value="${p.inf}" data-id="${p.id}" data-field="inf"></td>
-        <td><input class="pct-input" type="number" min="0" max="100" step="1" value="${p.cav}" data-id="${p.id}" data-field="cav"></td>
-        <td><input class="pct-input" type="number" min="0" max="100" step="1" value="${p.arc}" data-id="${p.id}" data-field="arc"></td>
-        <td>${sumOff ? `<span class="chip chip-warn">${sum}%</span>` : `<span class="chip">${sum}%</span>`}</td>
-        <td>${PRESETS.length>1 ? `<button class="row-del" data-id="${p.id}" title="Remove preset">×</button>` : ''}</td>
-      `;
-      presetTableBody.appendChild(tr);
-    });
-
-    presetTableBody.querySelectorAll('input').forEach(inp=>{
-      inp.addEventListener('input', e=>{
-        const id = e.target.dataset.id;
-        const field = e.target.dataset.field;
-        const preset = PRESETS.find(p=>p.id===id);
-        if(field==='name'){
-          preset.name = e.target.value || 'Untitled';
-        } else {
-          const val = parseFloat(e.target.value);
-          preset[field] = isNaN(val) ? 0 : val;
-        }
-        renderPresetSelect();
-        renderPresetTable_softUpdateSumOnly();
-        computeAll();
-      });
-    });
-
-    presetTableBody.querySelectorAll('.row-del').forEach(btn=>{
-      btn.addEventListener('click', e=>{
-        const id = e.target.dataset.id;
-        if(PRESETS.length<=1) return;
-        PRESETS = PRESETS.filter(p=>p.id!==id);
-        if(activePresetId===id) activePresetId = PRESETS[0].id;
-        renderPresetSelect();
-        renderPresetTable();
-        computeAll();
-      });
-    });
+  /* Relative damage of any split, as a % of the optimum. */
+  function scoreOf(shares, k, sumSq){
+    let s = 0;
+    TYPES.forEach(t=>{ s += k[t] * Math.sqrt(Math.max(0, shares[t])); });
+    return sumSq>0 ? s/Math.sqrt(sumSq) : 0;
   }
 
-  function renderPresetTable_softUpdateSumOnly(){
-    presetTableBody.querySelectorAll('tr').forEach((tr,i)=>{
-      const p = PRESETS[i];
-      if(!p) return;
-      const sum = p.inf + p.cav + p.arc;
-      const sumOff = Math.abs(sum-100) > 0.01;
-      const cell = tr.children[4];
-      cell.innerHTML = sumOff ? `<span class="chip chip-warn">${sum}%</span>` : `<span class="chip">${sum}%</span>`;
-    });
+  /* Whole percentages that still add to exactly 100. */
+  function roundedPct(share){
+    const inf = Math.round(share.inf*100);
+    const cav = Math.round(share.cav*100);
+    return {inf, cav, arc: Math.max(0, 100-inf-cav)};
   }
 
-  function computeRatio(){
-    const total = have.inf + have.cav + have.arc;
-    if(total<=0){
-      ratioShout.textContent = '0 / 0 / 0';
-      ratioSub.textContent = 'ENTER YOUR TROOP COUNTS ABOVE';
-      ['segInf','segCav','segArc'].forEach(id=> document.getElementById(id).style.width = '0%');
-      return;
-    }
-    const pct = {};
-    TYPES.forEach(t=>{ pct[t] = have[t] / total * 100; });
-    ratioShout.textContent = `${pct.inf.toFixed(0)} / ${pct.cav.toFixed(0)} / ${pct.arc.toFixed(0)}`;
-    ratioSub.textContent = `${fmt(total)} TROOPS TOTAL`;
-    document.getElementById('segInf').style.width = pct.inf + '%';
-    document.getElementById('segCav').style.width = pct.cav + '%';
-    document.getElementById('segArc').style.width = pct.arc + '%';
+  function anyBonusSet(){
+    return TYPES.some(t=> atk[t]!==0 || leth[t]!==0);
   }
 
-  function computeTargetRatio(){
-    const p = getActivePreset();
-    const sum = p.inf + p.cav + p.arc;
-    const frac = {};
-    TYPES.forEach(t=>{ frac[t] = sum>0 ? p[t]/sum : 0; });
+  function compute(){
+    const {share, k, sumSq} = optimalShares();
+    const pct = roundedPct(share);
 
-    ratioPreview.innerHTML = TYPES.map(t=>`<b>${TYPE_LABEL[t]} ${p[t]}%</b>`).join(' · ');
+    bestShout.textContent = `${pct.inf} / ${pct.cav} / ${pct.arc}`;
+    bestSub.textContent = anyBonusSet()
+      ? 'OPTIMISED FOR YOUR ATTACK + LETHALITY'
+      : 'BASE STATS ONLY — ADD YOUR BONUSES BELOW';
 
-    warnArea.innerHTML = '';
-    if(Math.abs(sum-100) > 0.01){
-      const div = document.createElement('div');
-      div.className = 'warn-note';
-      div.innerHTML = `<span>⚠</span><span>"${p.name}" adds up to ${sum}%, not 100 — results below are normalized proportionally. Fix the row in the presets table for exact numbers.</span>`;
-      warnArea.appendChild(div);
-    }
+    $('segInf').style.width = (share.inf*100) + '%';
+    $('segCav').style.width = (share.cav*100) + '%';
+    $('segArc').style.width = (share.arc*100) + '%';
 
-    const relevant = TYPES.filter(t=>frac[t]>0);
-    const capBound = capacity>0 ? capacity : Infinity;
-    const naturalMin = relevant.length ? Math.min(...relevant.map(t=> have[t] / frac[t])) : 0;
-    const naturalMax = relevant.length ? Math.max(...relevant.map(t=> have[t] / frac[t])) : 0;
-
-    /* ---- send on this rally: bounded by what you have AND rally capacity ---- */
-    const sendTotal = relevant.length ? Math.min(capBound, naturalMin) : 0;
-    const sendCappedByCapacity = capacity>0 && capBound < naturalMin - 0.5;
-
-    sendNowNum.textContent = fmt(sendTotal);
-    const sendNowLabel = document.querySelector('#sendNowNum + .train-summary-label');
-    if(sendNowLabel){
-      sendNowLabel.textContent = sendCappedByCapacity ? 'troops to send now (at your rally capacity)' : 'troops to send now';
-    }
-
+    /* --- send per rally --- */
     sendBreakdownArea.innerHTML = '';
-    TYPES.forEach(t=>{
-      const row = document.createElement('div');
-      row.className = 'breakdown-row';
-      if(frac[t]===0){
+    const perRally = {};
+    TYPES.forEach(t=>{ perRally[t] = marchSize * share[t]; });
+
+    if(marchSize<=0){
+      sendBreakdownArea.innerHTML = `<div class="breakdown-row"><span class="k">Enter your march size</span><span class="v">—</span></div>`;
+      sendTotalBox.innerHTML = `<b>share[type] = k[type]² ⁄ Σ k²</b><br>k[type] = base attack × (1 + attack%) × (1 + lethality%), ×1.10 for archers`;
+    } else {
+      TYPES.forEach(t=>{
+        const row = document.createElement('div');
+        row.className = 'breakdown-row';
         row.innerHTML = `
-          <span class="k">${TYPE_LABEL[t]}<span class="unused-tag">NOT IN THIS RATIO</span></span>
-          <span class="v">0<small>${fmt(have[t])} stay home</small></span>
+          <span class="k">${TYPE_LABEL[t]}</span>
+          <span class="v">${fmt(perRally[t])}<small>${pct[t]}% of the march</small></span>
         `;
-      } else {
-        const send = sendTotal * frac[t];
-        const leftover = Math.max(0, have[t] - send);
-        const isBottleneck = !sendCappedByCapacity && Math.abs(have[t]/frac[t] - naturalMin) < 0.5 && sendTotal>0;
-        row.innerHTML = `
-          <span class="k">${TYPE_LABEL[t]}${isBottleneck ? '<span class="limit-tag">LIMITS TOTAL</span>' : ''}</span>
-          <span class="v">${fmt(send)}<small>${fmt(leftover)} left over</small></span>
-        `;
-      }
-      sendBreakdownArea.appendChild(row);
-    });
-
-    /* ---- train for next time: grow the short types, capped by rally capacity ---- */
-    const trainTotal = relevant.length ? Math.min(capBound, naturalMax) : 0;
-    const trainCappedByCapacity = capacity>0 && capBound < naturalMax - 0.5;
-
-    const need = {};
-    TYPES.forEach(t=>{
-      need[t] = frac[t]>0 ? Math.max(0, Math.round(frac[t]*trainTotal - have[t])) : 0;
-    });
-    const totalNeed = TYPES.reduce((s,t)=> s+need[t], 0);
-
-    trainNeedNum.textContent = fmt(totalNeed);
-    const trainNeedLabel = document.querySelector('#trainNeedNum + .train-summary-label');
-    if(trainNeedLabel){
-      trainNeedLabel.textContent = trainCappedByCapacity ? 'more troops to train (capped by rally capacity)' : 'more troops to train';
+        sendBreakdownArea.appendChild(row);
+      });
+      sendTotalBox.innerHTML = `<b>${fmt(marchSize)} per rally × ${rallyCount} ${rallyCount===1?'rally':'rallies'} = ${fmt(marchSize*rallyCount)} troops in the field</b><br>
+        share[type] = k[type]² ⁄ Σ k² · k[type] = base attack × (1 + attack%) × (1 + lethality%), ×1.10 for archers`;
     }
+
+    /* --- what to train, to fill every rally at this ratio --- */
+    const needTotal = marchSize * rallyCount;
+    const need = {};
+    let deficit = 0;
+    TYPES.forEach(t=>{
+      const target = needTotal * share[t];
+      need[t] = Math.max(0, Math.round(target - have[t]));
+      deficit += need[t];
+    });
+    trainNeedNum.textContent = fmt(deficit);
 
     breakdownArea.innerHTML = '';
     TYPES.forEach(t=>{
+      const target = needTotal * share[t];
       const row = document.createElement('div');
       row.className = 'breakdown-row';
-      if(frac[t]===0){
-        row.innerHTML = `
-          <span class="k">${TYPE_LABEL[t]}<span class="unused-tag">NOT IN THIS RATIO</span></span>
-          <span class="v">${fmt(have[t])}<small>sits out this ratio</small></span>
-        `;
-      } else {
-        const isSet = need[t]===0 && trainTotal>0 && !trainCappedByCapacity;
-        row.innerHTML = `
-          <span class="k">${TYPE_LABEL[t]}${isSet ? '<span class="set-tag">SETS THE TOTAL</span>' : ''}</span>
-          <span class="v">${need[t]>0 ? '+'+fmt(need[t]) : 'Enough'}<small>have ${fmt(have[t])} · target ${fmt(frac[t]*trainTotal)}</small></span>
-        `;
-      }
+      const enough = need[t]===0 && needTotal>0;
+      row.innerHTML = `
+        <span class="k">${TYPE_LABEL[t]}${enough ? '<span class="set-tag">ENOUGH</span>' : ''}</span>
+        <span class="v">${need[t]>0 ? '+'+fmt(need[t]) : (needTotal>0 ? 'Enough' : '—')}<small>have ${fmt(have[t])} · need ${fmt(target)}</small></span>
+      `;
       breakdownArea.appendChild(row);
     });
 
-    formulaBox.innerHTML = `
-      <b>send total = min( rally capacity, min over types with pct&gt;0 of have ⁄ frac )</b><br>
-      <b>train total = min( rally capacity, max over types with pct&gt;0 of have ⁄ frac )</b><br>
-      per type = total × ( pct[type] ⁄ Σpct ) — rally capacity caps both, since it's what the ratio is actually built for
-    `;
+    formulaBox.innerHTML = needTotal>0
+      ? `<b>need[type] = march size × rallies × share[type]</b><br>anything you already hold above that is spare — it can sit out without costing damage`
+      : `<b>need[type] = march size × rallies × share[type]</b><br>set a march size to see what to train`;
+
+    renderCompare(share, k, sumSq, pct);
   }
 
-  function computeAll(){
-    computeRatio();
-    computeTargetRatio();
-  }
+  /* --- how the calculated optimum stacks up against common ratios --- */
+  function renderCompare(share, k, sumSq, pct){
+    if(!compareBody) return;
+    const rows = [{name:'Your optimum', inf:pct.inf, cav:pct.cav, arc:pct.arc, best:true}]
+      .concat(REFERENCE_RATIOS.map(r=>({...r, best:false})));
 
-  presetSelect.addEventListener('change', e=>{
-    activePresetId = e.target.value;
-    computeAll();
-  });
-
-  ['haveInf','haveCav','haveArc'].forEach((id,i)=>{
-    document.getElementById(id).addEventListener('input', e=>{
-      const val = parseFloat(e.target.value);
-      have[TYPES[i]] = isNaN(val) ? 0 : val;
-      computeAll();
+    compareBody.innerHTML = '';
+    rows.forEach(r=>{
+      const sum = r.inf + r.cav + r.arc;
+      const shares = {inf:r.inf/sum, cav:r.cav/sum, arc:r.arc/sum};
+      const rel = scoreOf(shares, k, sumSq) * 100;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="name">${r.name}${r.best ? ' <span class="set-tag">BEST</span>' : ''}</td>
+        <td>${r.inf} / ${r.cav} / ${r.arc}</td>
+        <td style="color:${r.best?'var(--mint)':'var(--body)'};font-family:'JetBrains Mono',monospace;">${rel.toFixed(1)}%</td>
+      `;
+      compareBody.appendChild(tr);
     });
+  }
+
+  /* ---------- wiring ---------- */
+  function bindCount(id, apply){
+    $(id).addEventListener('input', e=>{ apply(parseCount(e.target.value)); compute(); });
+  }
+  function bindPct(id, apply){
+    $(id).addEventListener('input', e=>{ apply(parsePct(e.target.value)); compute(); });
+  }
+
+  bindCount('marchSize', v=>{ marchSize = v; });
+  bindCount('rallyCount', v=>{ rallyCount = Math.max(1, v||1); });
+  TYPES.forEach(t=>{
+    const cap = t.charAt(0).toUpperCase()+t.slice(1);
+    bindCount('have'+cap, v=>{ have[t] = v; });
+    bindPct('atk'+cap,  v=>{ atk[t]  = v; });
+    bindPct('leth'+cap, v=>{ leth[t] = v; });
   });
 
-  document.getElementById('rallyCapacity').addEventListener('input', e=>{
-    const val = parseFloat(e.target.value);
-    capacity = isNaN(val) ? 0 : val;
-    computeAll();
+  TYPES.forEach(t=>{
+    const sel = $('tier'+t.charAt(0).toUpperCase()+t.slice(1));
+    sel.innerHTML = BASE_ATTACK[t].map((_,i)=>
+      `<option value="${i+1}" ${i+1===tier[t]?'selected':''}>T${i+1}</option>`
+    ).join('');
+    sel.addEventListener('change', e=>{ tier[t] = parseInt(e.target.value,10); compute(); });
   });
 
-  document.getElementById('resetBtn').addEventListener('click', ()=>{
+  $('resetBtn').addEventListener('click', ()=>{
+    marchSize = 0; rallyCount = 3;
     have = {inf:0, cav:0, arc:0};
-    capacity = 0;
-    document.getElementById('haveInf').value = 0;
-    document.getElementById('haveCav').value = 0;
-    document.getElementById('haveArc').value = 0;
-    document.getElementById('rallyCapacity').value = '';
-    computeAll();
+    atk  = {inf:0, cav:0, arc:0};
+    leth = {inf:0, cav:0, arc:0};
+    $('marchSize').value = '';
+    $('rallyCount').value = '3';
+    ['Inf','Cav','Arc'].forEach(c=>{
+      $('have'+c).value = '';
+      $('atk'+c).value = '0';
+      $('leth'+c).value = '0';
+    });
+    compute();
   });
 
-  document.getElementById('addPresetBtn').addEventListener('click', ()=>{
-    const id = 'p' + (nextPresetNum++);
-    PRESETS.push({id, name:'New preset', inf:0, cav:0, arc:0});
-    activePresetId = id;
-    renderPresetSelect();
-    renderPresetTable();
-    computeAll();
-  });
-
-  renderPresetSelect();
-  renderPresetTable();
-  computeAll();
+  compute();
 </script>
 </body>
 </html>
