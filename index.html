@@ -707,7 +707,7 @@
         </div>
         <div id="ccHint"></div>
         <div class="troop-input-row">
-          <label>Rallies you join <span class="optional-tag">3 is best</span></label>
+          <label>Rallies you join <span class="optional-tag">one per march queue</span></label>
           <input class="num-input" type="text" inputmode="numeric" id="rallyCount" value="3">
         </div>
         <div class="troop-input-row">
@@ -1205,10 +1205,11 @@
     marchSize = march;
     $('marchSize').value = march;
     ccHint.innerHTML = `<div class="cc-hint">
-      At <b>CC ${label}</b> your march is <b>${fmt(march)}</b>.
-      The rally holds <b>${fmt(rally)}</b> in total — that bigger number is the whole rally,
-      not you. Research and hero levels push your march above ${fmt(march)}, so edit it if
-      the game shows more.</div>`;
+      At <b>CC ${label}</b> your march is about <b>${fmt(march)}</b>, and the rally holds
+      <b>${fmt(rally)}</b> in total — that bigger number is the whole rally, not you.<br><br>
+      Your real march is higher: Regimental Expansion research, your three heroes and City
+      Bonuses all add to it. To read the exact figure, open a normal march formation, pick the
+      three heroes you'd use for bear, and look at the troop counter.</div>`;
     compute();
   });
 
