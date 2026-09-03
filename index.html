@@ -349,6 +349,27 @@
   }
   .ratio-bar-seg{height:100%;transition:width 0.15s ease;}
 
+  .use-as-target-link{
+    display:inline-block;
+    background:none;
+    border:none;
+    color:var(--periwinkle);
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    cursor:pointer;
+    margin-top:16px;
+    padding:4px 2px;
+  }
+  .use-as-target-link:hover{text-decoration:underline;}
+  .use-as-target-link:disabled{
+    color:var(--dim);
+    cursor:default;
+    text-decoration:none;
+  }
+
   .train-summary{
     display:flex;
     align-items:baseline;
@@ -737,6 +758,7 @@
         <div class="ratio-bar-seg" id="segCav" style="background:rgba(107,138,255,0.65);"></div>
         <div class="ratio-bar-seg" id="segArc" style="background:var(--periwinkle);"></div>
       </div>
+      <button class="use-as-target-link mono" id="useAsTargetBtn" type="button">Use this as my target ratio ↓</button>
     </div>
 
     <div class="reset-row" style="margin-top:-4px;margin-bottom:8px;">
@@ -905,6 +927,7 @@
   const ratioSub = document.getElementById('ratioSub');
   const trainNeedNum = document.getElementById('trainNeedNum');
   const sendNowNum = document.getElementById('sendNowNum');
+  const useAsTargetBtn = document.getElementById('useAsTargetBtn');
 
   function fmt(n){
     return Math.round(n).toLocaleString('en-US');
@@ -987,6 +1010,7 @@
 
   function computeRatio(){
     const total = have.inf + have.cav + have.arc;
+    useAsTargetBtn.disabled = total<=0;
     if(total<=0){
       ratioShout.textContent = '0 / 0 / 0';
       ratioSub.textContent = 'ENTER YOUR TROOP COUNTS ABOVE';
@@ -1000,6 +1024,15 @@
     document.getElementById('segInf').style.width = pct.inf + '%';
     document.getElementById('segCav').style.width = pct.cav + '%';
     document.getElementById('segArc').style.width = pct.arc + '%';
+  }
+
+  function currentRatioRounded(){
+    const total = have.inf + have.cav + have.arc;
+    if(total<=0) return null;
+    const pctInf = Math.round(have.inf/total*100);
+    const pctCav = Math.round(have.cav/total*100);
+    const pctArc = Math.max(0, 100 - pctInf - pctCav);
+    return {inf:pctInf, cav:pctCav, arc:pctArc};
   }
 
   function computeTargetRatio(){
@@ -1127,6 +1160,22 @@
     document.getElementById('haveCav').value = 0;
     document.getElementById('haveArc').value = 0;
     document.getElementById('rallyCapacity').value = '';
+    computeAll();
+  });
+
+  useAsTargetBtn.addEventListener('click', ()=>{
+    const vals = currentRatioRounded();
+    if(!vals) return;
+    let mine = PRESETS.find(p=>p.id==='mine');
+    if(mine){
+      Object.assign(mine, vals);
+    } else {
+      mine = {id:'mine', name:'My current ratio', ...vals};
+      PRESETS.unshift(mine);
+    }
+    activePresetId = 'mine';
+    renderPresetSelect();
+    renderPresetTable();
     computeAll();
   });
 
