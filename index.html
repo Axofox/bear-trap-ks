@@ -236,14 +236,24 @@
   }
   .troop-input-row{
     display:flex;align-items:center;justify-content:space-between;
-    gap:12px;
+    gap:8px 12px;
+    flex-wrap:wrap;
   }
   .troop-input-row label{
     font-size:14px;color:var(--heading);font-weight:600;
-    flex:none;
+    flex:1 1 auto;
+    min-width:0;
+  }
+  /* On a narrow phone the field drops to its own full-width line rather
+     than pushing the row past the viewport. */
+  .troop-input-row > input,
+  .troop-input-row > select{
+    flex:0 1 150px;
+    min-width:0;
   }
   input.num-input{
     width:150px;
+    max-width:100%;
     text-align:right;
     background:var(--surface-2);
     border:1px solid var(--border-2);
@@ -257,6 +267,24 @@
     scroll-margin-top:80px;
   }
   input.num-input:focus{outline:2px solid var(--periwinkle);outline-offset:1px;}
+
+  /* Below this width the label and field genuinely cannot share a line,
+     so stack them properly instead of letting the field wrap half-width. */
+  @media (max-width: 430px){
+    .troop-input-row{
+      flex-direction:column;
+      align-items:stretch;
+      gap:7px;
+    }
+    /* Class in the selector so these beat the base widths further down. */
+    .troop-input-row > input.num-input,
+    .troop-input-row > select.cc-select{
+      flex:none;
+      width:100%;
+      max-width:none;
+    }
+    .troop-inputs{gap:18px;}
+  }
 
   .optional-tag{
     font-family:'JetBrains Mono',monospace;
@@ -331,6 +359,7 @@
 
   select.cc-select{
     width:150px;
+    max-width:100%;
     padding:11px 12px;
     font-size:16px;
     background-position:right 10px center;
@@ -1258,7 +1287,7 @@
      to it, so the two can't be mixed up. */
   const ccSelect = $('ccLevel');
   const ccHint = $('ccHint');
-  ccSelect.innerHTML = '<option value="">— pick to fill march size —</option>' +
+  ccSelect.innerHTML = '<option value="">— pick —</option>' +
     COMMAND_CENTER.map((r,i)=> `<option value="${i}">CC ${r[0]}</option>`).join('');
   ccSelect.addEventListener('change', e=>{
     const i = e.target.value;
