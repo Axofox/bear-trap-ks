@@ -744,12 +744,12 @@
     <div class="card">
       <div class="troop-inputs">
         <div class="troop-input-row">
-          <label>Command Center level</label>
-          <select class="select-input cc-select" id="ccLevel"></select>
+          <label>Your march size <span class="optional-tag">"Squad" on a Dispatch screen</span></label>
+          <input class="num-input" type="text" inputmode="numeric" id="marchSize" value="" placeholder="troops">
         </div>
         <div class="troop-input-row">
-          <label>Your march size <span class="optional-tag">what you send</span></label>
-          <input class="num-input" type="text" inputmode="numeric" id="marchSize" value="" placeholder="troops">
+          <label>Command Center level <span class="optional-tag">optional · sanity check</span></label>
+          <select class="select-input cc-select" id="ccLevel"></select>
         </div>
         <div id="ccHint"></div>
         <div class="troop-input-row">
@@ -1100,12 +1100,23 @@
 
     /* --- catch the two easy mistakes --- */
     const warns = [];
-    if(rallyCount < 3){
-      const gain = (Math.sqrt(3/rallyCount) - 1) * 100;
+    if(rallyCount < 3 && marchSize > 0){
+      /* Real comparison, not the sqrt(3/n) shortcut. That shortcut assumes a
+         fixed pool spread thinner; with spare troops a third march is a whole
+         extra march (+50% over two), and the shortcut said 22%. */
+      const dmg = n => {
+        const c = {}; TYPES.forEach(t=>{ c[t] = stocked ? have[t]/n : Infinity; });
+        const tc = stocked ? TYPES.reduce((s,t)=> s+c[t], 0) : Infinity;
+        const s = bestWithinStock(stocked ? Math.min(marchSize, tc) : marchSize, c, k);
+        return n * TYPES.reduce((a,t)=> a + k[t]*Math.sqrt(s[t]), 0);
+      };
+      const gain = (dmg(3)/dmg(rallyCount) - 1) * 100;
       warns.push({
         title: `Join 3 rallies, not ${rallyCount} — worth ~${gain.toFixed(0)}% more damage`,
-        body: `Damage grows with the square root of troops per march, so the same troops spread across 3 marches
-          always beat ${rallyCount === 1 ? 'one loaded march' : rallyCount+' marches'}. This is worth far more than any ratio tweak.`
+        body: gain > 60
+          ? `You have spare troops, so a third march is a whole extra march of damage. This is worth far more than any ratio tweak.`
+          : `Damage grows with the square root of troops per march, so even the same troops spread across 3 marches beat
+             ${rallyCount === 1 ? 'one loaded march' : rallyCount+' marches'}. This is worth far more than any ratio tweak.`
       });
     }
     const withBonus = TYPES.filter(t=> atk[t]!==0 || leth[t]!==0);
@@ -1181,9 +1192,10 @@
           $('segArc').style.width = (actualShares.arc*100) + '%';
 
           sendNote.innerHTML = `<div class="stock-note">
-            Put <b>${aPct.inf} / ${aPct.cav} / ${aPct.arc}</b> in each of your ${rallyCount}
+            Set the Balance sliders to <b>${aPct.inf} / ${aPct.cav} / ${aPct.arc}</b> for each of your ${rallyCount}
             ${rallyCount===1?'march':'marches'} — the same split every time, since spreading each
-            troop type evenly across marches always beats loading one.<br><br>
+            troop type evenly across marches always beats loading one. Don't let the first
+            march take all your archers.<br><br>
             The ideal is ${pct.inf} / ${pct.cav} / ${pct.arc}, but
             ${short
               ? `you only have enough troops to fill ${fmt(budget)} of your ${fmt(marchSize)} march.`
@@ -1192,7 +1204,7 @@
           </div>`;
         } else {
           sendNote.innerHTML = `<div class="stock-note stock-ok"><b>Full ideal ratio.</b>
-            Put ${pct.inf} / ${pct.cav} / ${pct.arc} in each of your ${rallyCount}
+            Set the Balance sliders to ${pct.inf} / ${pct.cav} / ${pct.arc} for each of your ${rallyCount}
             ${rallyCount===1?'march':'marches'} — you have enough of every type.</div>`;
         }
       }
@@ -1289,19 +1301,20 @@
   const ccHint = $('ccHint');
   ccSelect.innerHTML = '<option value="">— pick —</option>' +
     COMMAND_CENTER.map((r,i)=> `<option value="${i}">CC ${r[0]}</option>`).join('');
+  /* Info only — it deliberately does NOT fill the march-size field. A real
+     CC26 player's march was 107,710 against a table value of 54,500: heroes
+     and research had doubled it, and auto-filling the table value produced
+     a confidently wrong "you have enough troops". */
   ccSelect.addEventListener('change', e=>{
     const i = e.target.value;
     if(i === ''){ ccHint.innerHTML = ''; return; }
     const [label, rally, march] = COMMAND_CENTER[+i];
-    marchSize = march;
-    $('marchSize').value = march;
     ccHint.innerHTML = `<div class="cc-hint">
-      At <b>CC ${label}</b> your march is about <b>${fmt(march)}</b>, and the rally holds
-      <b>${fmt(rally)}</b> in total — that bigger number is the whole rally, not you.<br><br>
-      Your real march is higher: Regimental Expansion research, your three heroes and City
-      Bonuses all add to it. To read the exact figure, open a normal march formation, pick the
-      three heroes you'd use for bear, and look at the troop counter.</div>`;
-    compute();
+      At <b>CC ${label}</b> the building alone gives a <b>${fmt(march)}</b> march, and the
+      rally holds <b>${fmt(rally)}</b> in total — that bigger number is the whole rally, not you.<br><br>
+      <b>Don't use ${fmt(march)}.</b> Your heroes and research can double it. Open any
+      <b>Dispatch Troops</b> screen (an alliance banner works) with your three bear heroes
+      selected and read the <b>Squad</b> number — that's your march size.</div>`;
   });
 
   bindCount('marchSize', v=>{ marchSize = v; });
