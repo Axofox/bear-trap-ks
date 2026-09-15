@@ -236,13 +236,23 @@
   }
   .troop-input-row{
     display:flex;align-items:center;justify-content:space-between;
-    gap:8px 12px;
-    flex-wrap:wrap;
+    gap:12px;
   }
+  /* Label is a narrow column: the name on top, the hint underneath. Hints
+     used to sit inline and pushed the field onto its own line on some rows
+     but not others. */
   .troop-input-row label{
     font-size:14px;color:var(--heading);font-weight:600;
     flex:1 1 auto;
     min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+  }
+  .troop-input-row label .optional-tag{
+    margin-left:0;
+    white-space:normal;
+    line-height:1.4;
   }
   /* On a narrow phone the field drops to its own full-width line rather
      than pushing the row past the viewport. */
