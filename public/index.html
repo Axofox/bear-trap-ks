@@ -539,6 +539,35 @@
   }
   .ratio-bar-seg{height:100%;transition:width 0.15s ease;}
 
+  /* The ideal ratio, shown under "use now" whenever the two differ */
+  .aim-row{
+    margin-top:18px;
+    padding-top:16px;
+    border-top:1px dashed var(--border-2);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    justify-content:center;
+    gap:6px 14px;
+  }
+  .aim-k{font-size:11px;color:var(--dim);}
+  .aim-v{
+    font-family:'Archivo',sans-serif;
+    font-weight:900;
+    font-size:24px;
+    color:var(--heading);
+    letter-spacing:-0.01em;
+    font-variant-numeric:tabular-nums;
+  }
+  .aim-note{
+    flex-basis:100%;
+    font-size:12.5px;
+    color:var(--body);
+    line-height:1.5;
+    text-align:center;
+  }
+  .aim-note b{color:var(--periwinkle);font-weight:700;}
+
   .train-summary{
     display:flex;
     align-items:baseline;
@@ -774,13 +803,18 @@
 
     <!-- ---- the best ratio (the shout) ---- -->
     <div class="result-card">
-      <div class="result-label mono">Best ratio · Inf / Cav / Arc</div>
+      <div class="result-label mono" id="bestLabel">Use now · Inf / Cav / Arc</div>
       <div class="result-number" id="bestShout">0 / 0 / 0</div>
       <div class="result-sub" id="bestSub">YOUR BEST BEAR TRAP RATIO</div>
       <div class="ratio-bar" id="ratioBar">
         <div class="ratio-bar-seg" id="segInf" style="background:rgba(107,138,255,0.35);"></div>
         <div class="ratio-bar-seg" id="segCav" style="background:rgba(107,138,255,0.65);"></div>
         <div class="ratio-bar-seg" id="segArc" style="background:var(--periwinkle);"></div>
+      </div>
+      <div class="aim-row" id="aimRow" hidden>
+        <div class="aim-k mono">Aim for</div>
+        <div class="aim-v" id="aimVal">3 / 27 / 70</div>
+        <div class="aim-note" id="aimNote"></div>
       </div>
     </div>
 
@@ -835,8 +869,8 @@
 
     <!-- ---- what to train ---- -->
     <div class="card" style="margin-top:24px;">
-      <div class="eyebrow" style="margin-bottom:16px;"><span class="dot"></span>What to train</div>
-      <p class="adv-note" style="margin-top:0;">What's missing before you could fill every rally at the ideal ratio.</p>
+      <div class="eyebrow" style="margin-bottom:16px;"><span class="dot"></span>Train to reach the ideal</div>
+      <p class="adv-note" style="margin-top:0;" id="trainIntro">What's missing before every march can go out at the ideal ratio.</p>
 
       <div class="train-summary">
         <div class="train-summary-num" id="trainNeedNum">0</div>
@@ -1078,18 +1112,30 @@
     /* Nothing entered yet — don't assert an answer the user didn't ask for. */
     const hasInput = marchSize > 0 || TYPES.some(t=> have[t] > 0) || anyBonusSet();
 
+    /* Three things the page must always keep distinct:
+         1. what you can send today   (headline, from your stock)
+         2. the ideal ratio           ("aim for" row)
+         3. what to train to get there (card further down)
+       Until stock is entered, 1 and 2 are the same number, so the aim row
+       stays hidden and the headline is labelled as the ideal. */
+    const aimRow = $('aimRow');
+    const idealStr = `${pct.inf} / ${pct.cav} / ${pct.arc}`;
+    const tunedStr = anyBonusSet() ? "tuned to your leader's stats" : 'generic baseline — add leader stats to tune';
+
     if(!hasInput){
+      $('bestLabel').textContent = 'Best ratio · Inf / Cav / Arc';
       bestShout.textContent = '0 / 0 / 0';
       bestSub.textContent = 'YOUR BEST BEAR TRAP RATIO';
       ['segInf','segCav','segArc'].forEach(id=>{ $(id).style.width = '0%'; });
+      aimRow.hidden = true;
     } else {
-      bestShout.textContent = `${pct.inf} / ${pct.cav} / ${pct.arc}`;
-      bestSub.textContent = anyBonusSet()
-        ? "TUNED TO YOUR LEADER'S STATS"
-        : 'GENERIC BASELINE — ADD LEADER STATS TO TUNE';
+      $('bestLabel').textContent = 'Best ratio · Inf / Cav / Arc';
+      bestShout.textContent = idealStr;
+      bestSub.textContent = tunedStr.toUpperCase();
       $('segInf').style.width = (share.inf*100) + '%';
       $('segCav').style.width = (share.cav*100) + '%';
       $('segArc').style.width = (share.arc*100) + '%';
+      aimRow.hidden = true;
     }
 
     /* --- send per rally, limited by what you actually own --- */
@@ -1182,30 +1228,35 @@
            but barely costly gets reported as the ideal one. */
         const constrained = TYPES.some(t=> Math.abs(send[t] - budget*share[t]) > 1);
         if(constrained || short){
-          /* The ideal ratio isn't reachable with this stock, so the headline
-             shows the ratio you can actually put in each march. The ideal
-             stays visible underneath as the thing to train toward. */
+          /* Stock can't reach the ideal: headline = what you can use today,
+             "aim for" row = the ideal, train card = the gap between them. */
+          $('bestLabel').textContent = 'Use now · Inf / Cav / Arc';
           bestShout.textContent = `${aPct.inf} / ${aPct.cav} / ${aPct.arc}`;
-          bestSub.textContent = `WHAT YOU CAN SEND · ${rel.toFixed(1)}% OF IDEAL`;
+          bestSub.textContent = `WITH THE TROOPS YOU HAVE · ${rel.toFixed(1)}% OF IDEAL`;
           $('segInf').style.width = (actualShares.inf*100) + '%';
           $('segCav').style.width = (actualShares.cav*100) + '%';
           $('segArc').style.width = (actualShares.arc*100) + '%';
+
+          $('aimVal').textContent = idealStr;
+          $('aimNote').innerHTML = short
+            ? `You only have troops for ${fmt(budget)} of your ${fmt(marchSize)} march. Train what the card below says to reach it.`
+            : `You don't hold enough of every type to reach it yet. Train what the card below says — that's worth <b>+${(100/rel*100-100).toFixed(1)}%</b> damage.`;
+          aimRow.hidden = false;
 
           sendNote.innerHTML = `<div class="stock-note">
             Set the Balance sliders to <b>${aPct.inf} / ${aPct.cav} / ${aPct.arc}</b> for each of your ${rallyCount}
             ${rallyCount===1?'march':'marches'} — the same split every time, since spreading each
             troop type evenly across marches always beats loading one. Don't let the first
-            march take all your archers.<br><br>
-            The ideal is ${pct.inf} / ${pct.cav} / ${pct.arc}, but
-            ${short
-              ? `you only have enough troops to fill ${fmt(budget)} of your ${fmt(marchSize)} march.`
-              : `you don't hold enough of every type to reach it.`}
-            What you can send is worth <b>${rel.toFixed(1)}%</b> of it.
+            march take all your archers.
           </div>`;
         } else {
-          sendNote.innerHTML = `<div class="stock-note stock-ok"><b>Full ideal ratio.</b>
+          /* Stock covers the ideal: use-now and aim-for are the same number. */
+          $('bestLabel').textContent = 'Use now · Inf / Cav / Arc';
+          bestSub.textContent = 'YOU CAN SEND THE IDEAL · ' + tunedStr.toUpperCase();
+          aimRow.hidden = true;
+          sendNote.innerHTML = `<div class="stock-note stock-ok"><b>This is the ideal ratio, and you have the troops for it.</b>
             Set the Balance sliders to ${pct.inf} / ${pct.cav} / ${pct.arc} for each of your ${rallyCount}
-            ${rallyCount===1?'march':'marches'} — you have enough of every type.</div>`;
+            ${rallyCount===1?'march':'marches'}.</div>`;
         }
       }
 
