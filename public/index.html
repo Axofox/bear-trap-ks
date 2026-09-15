@@ -773,7 +773,7 @@
     <div class="card">
       <div class="troop-inputs">
         <div class="troop-input-row">
-          <label>Your march size <span class="optional-tag">"Squad" on a Dispatch screen</span></label>
+          <label>Your march size <span class="optional-tag">"Team" or "Squad" on a Dispatch screen</span></label>
           <input class="num-input" type="text" inputmode="numeric" id="marchSize" value="" placeholder="troops">
         </div>
         <div class="troop-input-row">
@@ -782,11 +782,11 @@
         </div>
         <div id="ccHint"></div>
         <div class="troop-input-row">
-          <label>Rallies you join <span class="optional-tag">one per march queue</span></label>
+          <label>Rallies you join <span class="optional-tag">"March Queue" on Troops Preview</span></label>
           <input class="num-input" type="text" inputmode="numeric" id="rallyCount" value="3">
         </div>
         <div class="troop-input-row">
-          <label>Infantry you have</label>
+          <label>Infantry you have <span class="optional-tag">Troops Preview · all tiers</span></label>
           <input class="num-input" type="text" inputmode="numeric" id="haveInf" value="" placeholder="optional">
         </div>
         <div class="troop-input-row">
@@ -1146,24 +1146,28 @@
 
     /* --- catch the two easy mistakes --- */
     const warns = [];
-    if(rallyCount < 3 && marchSize > 0){
-      /* Real comparison, not the sqrt(3/n) shortcut. That shortcut assumes a
-         fixed pool spread thinner; with spare troops a third march is a whole
-         extra march (+50% over two), and the shortcut said 22%. */
+    if(marchSize > 0 && rallyCount >= 1){
+      /* Every extra rally is worth checking, not just getting to 3 — a
+         player with 5 march queues gained 31% going from 3 to 5. Compare
+         against ONE more rally with the real optimizer (the old sqrt(3/n)
+         shortcut assumed a fixed troop pool and understated it). */
       const dmg = n => {
         const c = {}; TYPES.forEach(t=>{ c[t] = stocked ? have[t]/n : Infinity; });
         const tc = stocked ? TYPES.reduce((s,t)=> s+c[t], 0) : Infinity;
         const s = bestWithinStock(stocked ? Math.min(marchSize, tc) : marchSize, c, k);
         return n * TYPES.reduce((a,t)=> a + k[t]*Math.sqrt(s[t]), 0);
       };
-      const gain = (dmg(3)/dmg(rallyCount) - 1) * 100;
-      warns.push({
-        title: `Join 3 rallies, not ${rallyCount} — worth ~${gain.toFixed(0)}% more damage`,
-        body: gain > 60
-          ? `You have spare troops, so a third march is a whole extra march of damage. This is worth far more than any ratio tweak.`
-          : `Damage grows with the square root of troops per march, so even the same troops spread across 3 marches beat
-             ${rallyCount === 1 ? 'one loaded march' : rallyCount+' marches'}. This is worth far more than any ratio tweak.`
-      });
+      const gain = (dmg(rallyCount+1)/dmg(rallyCount) - 1) * 100;
+      if(gain >= 5){
+        warns.push({
+          title: rallyCount < 3
+            ? `Join ${rallyCount+1} rallies, not ${rallyCount} — worth ~${gain.toFixed(0)}% more damage`
+            : `One more rally (${rallyCount+1}) would add ~${gain.toFixed(0)}% — if you have a spare march queue`,
+          body: `Damage grows with the square root of troops per march, so spreading the same troops over one more
+            march always adds damage. Join as many rallies as you have march queues — check <b>March Queue</b> on
+            your Troops Preview. This is worth more than any ratio tweak.`
+        });
+      }
     }
     const withBonus = TYPES.filter(t=> atk[t]!==0 || leth[t]!==0);
     if(withBonus.length && withBonus.length < 3){
